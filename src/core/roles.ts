@@ -1,17 +1,20 @@
 import { NormalizedRole, RoleWithAccess, UserWithRoles, UserWithZonePermissions } from '../types/roles';
 import { ZonePermissions } from '../types/permissions';
 import { fromBitField } from './bitfield';
+import { validateBitField } from './validation';
 
 /**
  * Transform a role with access to a normalized role format
  * @param role Role with access permissions
  * @returns Normalized role
+ * @throws {AccessControlException} If any permission value is invalid
  */
 export function normalizeRole(role: RoleWithAccess): NormalizedRole {
   return {
     id: role.id,
     name: role.name,
     access: role.access.reduce<Record<string, number>>((accum, access) => {
+      validateBitField(access.permission, `permission for zone ${access.zone.name}`);
       accum[access.zone.name] = access.permission;
       return accum;
     }, {}),
@@ -32,6 +35,7 @@ export function normalizeRoles(roles: Array<RoleWithAccess>): Array<NormalizedRo
  * Uses OR operation to combine permissions - if any role grants access, access is granted
  * @param roles Array of normalized roles
  * @returns Combined permissions object
+ * @throws {AccessControlException} If any permission value is invalid
  */
 export function collapseRoles(roles: Array<NormalizedRole>): Record<string, number> {
   return roles
@@ -39,6 +43,7 @@ export function collapseRoles(roles: Array<NormalizedRole>): Record<string, numb
     .reduce(
       (accum, roleAccess) =>
         Object.entries(roleAccess).reduce((roleAccum, [key, val]) => {
+          validateBitField(val, `permission value for zone ${key} in role`);
           roleAccum[key] = (roleAccum[key] || 0) | val;
           return roleAccum;
         }, accum),

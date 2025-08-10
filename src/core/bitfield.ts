@@ -1,5 +1,6 @@
 import { PERMISSION_MASKS } from '../constants/masks';
 import { Permission, PermissionInput } from '../types/permissions';
+import { validateBitField, validatePermissionMask } from './validation';
 
 /**
  * Convert a permission object to a bitfield number
@@ -19,8 +20,11 @@ export function toBitField(permission: Permission): number {
  * Convert a bitfield number to a permission object
  * @param bitField Bitfield number representing permissions
  * @returns Permission object with boolean values
+ * @throws {AccessControlException} If bitField is invalid
  */
 export function fromBitField(bitField: number): Permission {
+  validateBitField(bitField, 'bitfield conversion input');
+  
   return {
     create: (PERMISSION_MASKS.CREATE & bitField) === PERMISSION_MASKS.CREATE,
     read: (PERMISSION_MASKS.READ & bitField) === PERMISSION_MASKS.READ,
@@ -57,9 +61,11 @@ export function normalizePermission(input: PermissionInput): Permission {
  * Normalize permission input to bitfield format
  * @param input Permission input (either Permission object or number)
  * @returns Bitfield number
+ * @throws {AccessControlException} If input is invalid
  */
 export function normalizePermissionToBitField(input: PermissionInput): number {
   if (typeof input === 'number') {
+    validateBitField(input, 'permission input');
     return input;
   }
   return toBitField(input);
@@ -70,8 +76,12 @@ export function normalizePermissionToBitField(input: PermissionInput): number {
  * @param bitField The permission bitfield to check
  * @param permission The permission mask to check for
  * @returns True if the permission is granted
+ * @throws {AccessControlException} If either parameter is invalid
  */
 export function hasPermission(bitField: number, permission: number): boolean {
+  validateBitField(bitField, 'permission bitfield');
+  validatePermissionMask(permission, 'permission mask');
+  
   return (bitField & permission) === permission;
 }
 
@@ -79,7 +89,13 @@ export function hasPermission(bitField: number, permission: number): boolean {
  * Combine multiple permission bitfields using OR operation
  * @param bitFields Array of permission bitfields
  * @returns Combined bitfield
+ * @throws {AccessControlException} If any bitfield is invalid
  */
 export function combinePermissions(...bitFields: number[]): number {
+  // Validate all inputs first
+  bitFields.forEach((bitField, index) => {
+    validateBitField(bitField, `bitfield at index ${index}`);
+  });
+  
   return bitFields.reduce((combined, bitField) => combined | bitField, 0);
 }
