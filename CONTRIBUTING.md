@@ -1,13 +1,13 @@
-# Contributing to rbac-zones
+# Contributing to access-zones
 
-Thank you for your interest in contributing to rbac-zones! This document provides guidelines and information for contributors.
+Thank you for your interest in contributing to access-zones! This document provides guidelines and information for contributors.
 
 ## Development Setup
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/scazan/rbac-zones.git
-cd rbac-zones
+git clone https://github.com/scazan/access-zones.git
+cd access-zones
 ```
 
 2. Install dependencies:

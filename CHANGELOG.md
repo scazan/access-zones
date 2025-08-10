@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.0.0] - 2025-08-10
 
 ### Added
-- Initial release of rbac-zones
+- Initial release of access-zones
 - Core RBAC functionality with zone-based permissions
 - Bitfield operations for high-performance permission checking
 - Role aggregation with OR logic

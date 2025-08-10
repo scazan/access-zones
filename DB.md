@@ -1,6 +1,6 @@
 # PostgreSQL Database Structure for RBAC Zones
 
-This document describes a PostgreSQL database schema designed to work with the `rbac-zones` library for managing role-based access control with zone-based permissions.
+This document describes a PostgreSQL database schema designed to work with the `access-zones` library for managing role-based access control with zone-based permissions.
 
 ## Overview
 
@@ -263,7 +263,7 @@ WHERE arou.user_id = $1
 GROUP BY ar.id, ar.name;
 ```
 
-This query returns data in the exact format expected by the `rbac-zones` library's `RoleWithAccess` type.
+This query returns data in the exact format expected by the `access-zones` library's `RoleWithAccess` type.
 
 ### Permission Checking Flow
 
@@ -277,7 +277,7 @@ This query returns data in the exact format expected by the `rbac-zones` library
 - **Efficient storage**: Single integer per role-zone combination
 - **Fast queries**: Bitwise operations in SQL (`permission & 4 = 4` for READ check)
 - **Extensible**: Can add new permission types without schema changes
-- **Library compatible**: Direct integration with `rbac-zones` functions
+- **Library compatible**: Direct integration with `access-zones` functions
 
 ### Example Permission Values
 
@@ -290,4 +290,4 @@ This query returns data in the exact format expected by the `rbac-zones` library
 | Full CRUD | 15 | 0b1111 | All permissions |
 | Future: Approve | 16 | 0b10000 | Custom permission |
 
-This database structure provides a robust, scalable foundation for implementing role-based access control with the `rbac-zones` library while supporting multi-tenancy, resource ownership, and future extensibility.
+This database structure provides a robust, scalable foundation for implementing role-based access control with the `access-zones` library while supporting multi-tenancy, resource ownership, and future extensibility.

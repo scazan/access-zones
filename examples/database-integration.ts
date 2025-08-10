@@ -4,7 +4,7 @@ import {
   PERMISSION_MASKS,
   RoleWithAccess,
   NormalizedRole
-} from 'rbac-zones';
+} from 'access-zones';
 
 // Example: Database Integration
 

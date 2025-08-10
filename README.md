@@ -1,8 +1,8 @@
-# rbac-zones
+# access-zones
 
 A flexible, high-performance role-based access control (RBAC) library with zone-based permissions using efficient bitfield operations.
 
-[![npm version](https://badge.fury.io/js/rbac-zones.svg)](https://badge.fury.io/js/rbac-zones)
+[![npm version](https://badge.fury.io/js/access-zones.svg)](https://badge.fury.io/js/access-zones)
 [![TypeScript](https://img.shields.io/badge/%3C%2F%3E-TypeScript-%230074c1.svg)](http://www.typescriptlang.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
@@ -20,11 +20,11 @@ A flexible, high-performance role-based access control (RBAC) library with zone-
 ## Installation
 
 ```bash
-npm install rbac-zones
+npm install access-zones
 # or
-yarn add rbac-zones
+yarn add access-zones
 # or
-pnpm add rbac-zones
+pnpm add access-zones
 ```
 
 ## Quick Start
@@ -35,7 +35,7 @@ import {
   assertAccess, 
   PERMISSION_MASKS,
   DEFAULT_ACCESS_ZONES 
-} from 'rbac-zones';
+} from 'access-zones';
 
 // Define user roles
 const userRoles = [
@@ -66,7 +66,7 @@ assertAccess({ content: PERMISSION_MASKS.READ }, userRoles);
 Permissions use bitfield operations for maximum efficiency:
 
 ```typescript
-import { PERMISSION_MASKS } from 'rbac-zones';
+import { PERMISSION_MASKS } from 'access-zones';
 
 PERMISSION_MASKS.CREATE  // 0b1000 (8)  - Can create new items
 PERMISSION_MASKS.READ    // 0b0100 (4)  - Can read/view items  
@@ -80,7 +80,7 @@ PERMISSION_MASKS.ADMIN   // 0b1111 (15) - All permissions
 Organize permissions by functional areas:
 
 ```typescript
-import { DEFAULT_ACCESS_ZONES } from 'rbac-zones';
+import { DEFAULT_ACCESS_ZONES } from 'access-zones';
 
 // Built-in zones: content, users, admin, settings, reports, 
 // billing, support, api, files, notifications
@@ -105,7 +105,7 @@ interface NormalizedRole {
 Check if user roles satisfy required permissions across zones.
 
 ```typescript
-import { checkPermission, PERMISSION_MASKS } from 'rbac-zones';
+import { checkPermission, PERMISSION_MASKS } from 'access-zones';
 
 const needed = {
   content: PERMISSION_MASKS.READ | PERMISSION_MASKS.UPDATE,
@@ -121,7 +121,7 @@ const hasAccess = checkPermission(needed, userRoles);
 Assert permissions, throwing `AccessControlException` if insufficient.
 
 ```typescript
-import { assertAccess, AccessControlException } from 'rbac-zones';
+import { assertAccess, AccessControlException } from 'access-zones';
 
 try {
   assertAccess({ content: PERMISSION_MASKS.DELETE }, userRoles);
@@ -153,7 +153,7 @@ assertDataAccess(data, needed, user);
 Convert between permission objects and efficient bitfield numbers.
 
 ```typescript
-import { toBitField, fromBitField } from 'rbac-zones';
+import { toBitField, fromBitField } from 'access-zones';
 
 const permission = { 
   create: true, 
@@ -171,7 +171,7 @@ const restored = fromBitField(bitField); // { create: true, read: true, ... }
 Check if a bitfield contains a specific permission.
 
 ```typescript
-import { hasPermission, PERMISSION_MASKS } from 'rbac-zones';
+import { hasPermission, PERMISSION_MASKS } from 'access-zones';
 
 const userPermissions = 12; // CREATE + READ
 const canRead = hasPermission(userPermissions, PERMISSION_MASKS.READ); // true
@@ -185,7 +185,7 @@ const canDelete = hasPermission(userPermissions, PERMISSION_MASKS.DELETE); // fa
 Combine multiple roles using OR logic - if any role grants access, access is granted.
 
 ```typescript
-import { collapseRoles } from 'rbac-zones';
+import { collapseRoles } from 'access-zones';
 
 const combinedPermissions = collapseRoles(userRoles);
 // Returns: { content: 14, admin: 4, users: 6 }
@@ -196,7 +196,7 @@ const combinedPermissions = collapseRoles(userRoles);
 Get user's permissions across all zones as boolean objects.
 
 ```typescript
-import { getGlobalPermissions } from 'rbac-zones';
+import { getGlobalPermissions } from 'access-zones';
 
 const permissions = getGlobalPermissions(user);
 // Returns: { 
@@ -214,7 +214,7 @@ import {
   userHasAllRoles,
   getUserZones,
   getUserZonesWithPermission 
-} from 'rbac-zones';
+} from 'access-zones';
 
 // Check specific role
 userHasRole(user, 'Editor'); // boolean
@@ -261,7 +261,7 @@ const permissions: Partial<Record<CustomZone, number>> = {
 Control access to individual items with global and user-specific overrides:
 
 ```typescript
-import { getUserPermissions } from 'rbac-zones';
+import { getUserPermissions } from 'access-zones';
 
 const item = {
   uid: 'owner123',
@@ -327,13 +327,13 @@ import type {
   NormalizedRole,
   UserWithRoles,
   AccessControlException 
-} from 'rbac-zones';
+} from 'access-zones';
 ```
 
 ## Error Handling
 
 ```typescript
-import { AccessControlException } from 'rbac-zones';
+import { AccessControlException } from 'access-zones';
 
 try {
   assertAccess(requiredPermissions, userRoles);

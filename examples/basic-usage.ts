@@ -6,7 +6,7 @@ import {
   getGlobalPermissions,
   NormalizedRole,
   UserWithRoles
-} from 'rbac-zones';
+} from 'access-zones';
 
 // Example: Content Management System
 

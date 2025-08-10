@@ -1,5 +1,5 @@
 {
-  "name": "rbac-zones",
+  "name": "access-zones",
   "version": "1.0.0",
   "description": "A flexible role-based access control (RBAC) library with zone-based permissions using efficient bitfield operations",
   "main": "dist/index.js",
@@ -53,12 +53,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/scazan/rbac-zones.git"
+    "url": "https://github.com/scazan/access-zones.git"
   },
   "bugs": {
-    "url": "https://github.com/scazan/rbac-zones/issues"
+    "url": "https://github.com/scazan/access-zones/issues"
   },
-  "homepage": "https://github.com/scazan/rbac-zones#readme",
+  "homepage": "https://github.com/scazan/access-zones#readme",
   "engines": {
     "node": ">=16.0.0"
   }

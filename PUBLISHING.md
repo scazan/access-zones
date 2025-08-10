@@ -1,6 +1,6 @@
-# Publishing rbac-zones to npm
+# Publishing access-zones to npm
 
-This document outlines the steps to publish the rbac-zones package to npm.
+This document outlines the steps to publish the access-zones package to npm.
 
 ## Prerequisites
 
@@ -117,7 +117,7 @@ Follow semantic versioning (semver):
 After publishing:
 
 1. Verify the package on npmjs.com
-2. Test installation: `npm install rbac-zones`
+2. Test installation: `npm install access-zones`
 3. Update documentation if needed
 4. Announce the release
 
