@@ -12,8 +12,7 @@ export const AccessZoneSchema = z.object({
  * Zod schema for access role permission on access zone junction table
  */
 export const AccessRolePermissionOnAccessZoneSchema = z.object({
-  id: z.string(),
-  accessRoleId: z.string().nullable(),
+  accessRoleId: z.string(),
   accessZoneId: z.string(),
   permission: z.number(),
 });

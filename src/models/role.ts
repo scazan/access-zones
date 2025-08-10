@@ -1,14 +1,11 @@
 import { z } from 'zod';
 
 /**
- * Zod schema for access role
+ * Zod schema for access role - focused on permission-related fields only
  */
 export const AccessRoleSchema = z.object({
   id: z.string(),
-  createdAt: z.date(),
-  updatedAt: z.date(),
   name: z.string(),
-  description: z.string().nullish(),
 });
 
 /**

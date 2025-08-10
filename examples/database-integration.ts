@@ -9,32 +9,37 @@ import {
 // Example: Database Integration
 //
 // This example shows how to integrate with a database while handling multi-tenancy.
-// Important: Tenant isolation should be handled at the database query level, not in the RBAC library.
-// The RBAC library focuses purely on role-based permissions within a tenant context.
+// Important: 
+// 1. Tenant isolation should be handled at the database query level, not in the RBAC library.
+// 2. The RBAC library only validates core permission fields (id, name, permission bitfields).
+// 3. Additional database fields like description, createdAt, etc. are optional and not validated by RBAC.
+// 4. This keeps the library focused on permissions while allowing flexible database schemas.
 
 // Simulate database models (e.g., Prisma, TypeORM, etc.)
 // Note: Multi-tenancy is handled at the database query level, not in the RBAC library
+// The RBAC library only requires 'id' and 'name' - other fields are optional database concerns
 interface DatabaseRole {
   id: string;
   name: string;
-  description: string;
+  description?: string; // Optional: for UI display, not used by RBAC
   tenantId: string; // Tenant isolation handled in database queries
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: Date; // Optional: for auditing, not used by RBAC
+  updatedAt: Date; // Optional: for auditing, not used by RBAC
   permissions: Array<{
-    id: string;
+    id?: string; // Optional: database primary key, not used by RBAC
     zone: {
-      id: string;
-      name: string;
+      id: string; // Required: zone identifier
+      name: string; // Required: zone name for permissions
     };
-    permission: number;
+    permission: number; // Required: permission bitfield
   }>;
 }
 
 interface DatabaseUser {
-  id: string;
-  email: string;
+  id: string; // Required: user identifier for RBAC
+  email?: string; // Optional: for UI display, not used by RBAC
   tenantId: string; // Tenant isolation handled in database queries
+  createdAt?: Date; // Optional: for auditing, not used by RBAC
   roles: Array<{
     roleId: string;
     role: DatabaseRole;
@@ -42,10 +47,12 @@ interface DatabaseUser {
 }
 
 // Transform database role to library format
+// Note: Only id, name, and access are required for RBAC functionality
 function transformDatabaseRole(dbRole: DatabaseRole): RoleWithAccess {
   return {
     id: dbRole.id,
     name: dbRole.name,
+    // Optional fields can be included but aren't required for RBAC
     description: dbRole.description,
     createdAt: dbRole.createdAt,
     updatedAt: dbRole.updatedAt,
@@ -74,19 +81,19 @@ function transformDatabaseUser(dbUser: DatabaseUser) {
 const mockDatabaseRole: DatabaseRole = {
   id: 'role-123',
   name: 'Content Manager',
-  description: 'Can manage all content',
+  description: 'Can manage all content', // Optional: for UI display
   tenantId: 'tenant-456', // Tenant isolation handled at query level
-  createdAt: new Date(),
-  updatedAt: new Date(),
+  createdAt: new Date(), // Optional: for auditing
+  updatedAt: new Date(), // Optional: for auditing
   permissions: [
     {
-      id: 'perm-1',
-      zone: { id: 'zone-1', name: 'content' },
+      // id: 'perm-1', // Optional: database primary key
+      zone: { id: 'zone-1', name: 'content' }, // Required: for RBAC
       permission: PERMISSION_MASKS.CREATE | PERMISSION_MASKS.READ | PERMISSION_MASKS.UPDATE
     },
     {
-      id: 'perm-2', 
-      zone: { id: 'zone-2', name: 'files' },
+      // id: 'perm-2', // Optional: database primary key
+      zone: { id: 'zone-2', name: 'files' }, // Required: for RBAC
       permission: PERMISSION_MASKS.READ | PERMISSION_MASKS.UPDATE
     }
   ]

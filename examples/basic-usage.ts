@@ -10,7 +10,7 @@ import {
 
 // Example: Content Management System
 
-// Define roles
+// Define roles - only id, name, and access are required for RBAC functionality
 const editorRole: NormalizedRole = {
   id: 'editor',
   name: 'Content Editor',

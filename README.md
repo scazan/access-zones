@@ -15,6 +15,7 @@ A flexible, high-performance role-based access control (RBAC) library with zone-
 - 📦 **Zero Dependencies**: Only requires Zod for runtime validation
 - 🧪 **Well Tested**: 100% test coverage with comprehensive edge cases
 - 🔧 **Flexible**: Database-agnostic core with customizable zones
+- 🎯 **Focused**: Validates only permission-related fields, allowing flexible database schemas
 - 📚 **Well Documented**: Complete API documentation with examples
 
 ## Installation
@@ -96,316 +97,34 @@ interface NormalizedRole {
 }
 ```
 
-## API Reference
+## Validation
 
-### Permission Checking
+The library uses a focused validation approach:
 
-#### `checkPermission(needed, roles)`
-
-Check if user roles satisfy required permissions across zones.
+- **Core Fields Only**: Zod schemas validate only permission-related fields (`id`, `name`, `permission`)
+- **Optional Database Fields**: Fields like `description`, `createdAt`, `updatedAt` are optional in TypeScript interfaces
+- **Flexible Schemas**: Your database can include any additional fields without affecting RBAC functionality
 
 ```typescript
-import { checkPermission, PERMISSION_MASKS } from 'access-zones';
-
-const needed = {
-  content: PERMISSION_MASKS.READ | PERMISSION_MASKS.UPDATE,
-  admin: PERMISSION_MASKS.READ
+// ✅ Minimal role - only required fields
+const minimalRole = {
+  id: 'editor',
+  name: 'Content Editor',
+  access: { content: PERMISSION_MASKS.READ }
 };
 
-const hasAccess = checkPermission(needed, userRoles);
-// Returns: boolean
-```
-
-#### `assertAccess(needed, roles)`
-
-Assert permissions, throwing `AccessControlException` if insufficient.
-
-```typescript
-import { assertAccess, AccessControlException } from 'access-zones';
-
-try {
-  assertAccess({ content: PERMISSION_MASKS.DELETE }, userRoles);
-  // Continues if user has permission
-} catch (error) {
-  if (error instanceof AccessControlException) {
-    console.log(error.status); // 'unauthorized'
-    console.log(error.message); // 'Not authenticated'
-  }
-}
-```
-
-#### `assertDataAccess(data, needed, user)`
-
-Check access to specific data items, considering ownership.
-
-```typescript
-const data = { userId: 'user123' };
-const needed = { content: PERMISSION_MASKS.UPDATE };
-
-// Allows access if user owns the data OR has the required permissions
-assertDataAccess(data, needed, user);
-```
-
-### Bitfield Operations
-
-#### `toBitField(permission)` / `fromBitField(bitField)`
-
-Convert between permission objects and efficient bitfield numbers.
-
-```typescript
-import { toBitField, fromBitField } from 'access-zones';
-
-const permission = { 
-  create: true, 
-  read: true, 
-  update: false, 
-  delete: false 
-};
-
-const bitField = toBitField(permission); // 12 (8 + 4)
-const restored = fromBitField(bitField); // { create: true, read: true, ... }
-```
-
-#### `hasPermission(bitField, permission)`
-
-Check if a bitfield contains a specific permission.
-
-```typescript
-import { hasPermission, PERMISSION_MASKS } from 'access-zones';
-
-const userPermissions = 12; // CREATE + READ
-const canRead = hasPermission(userPermissions, PERMISSION_MASKS.READ); // true
-const canDelete = hasPermission(userPermissions, PERMISSION_MASKS.DELETE); // false
-```
-
-### Role Management
-
-#### `collapseRoles(roles)`
-
-Combine multiple roles using OR logic - if any role grants access, access is granted.
-
-```typescript
-import { collapseRoles } from 'access-zones';
-
-const combinedPermissions = collapseRoles(userRoles);
-// Returns: { content: 14, admin: 4, users: 6 }
-```
-
-#### `getGlobalPermissions(user)`
-
-Get user's permissions across all zones as boolean objects.
-
-```typescript
-import { getGlobalPermissions } from 'access-zones';
-
-const permissions = getGlobalPermissions(user);
-// Returns: { 
-//   content: { create: true, read: true, update: true, delete: false },
-//   admin: { create: false, read: true, update: false, delete: false }
-// }
-```
-
-#### Role Checking Utilities
-
-```typescript
-import { 
-  userHasRole, 
-  userHasAnyRole, 
-  userHasAllRoles,
-  getUserZones,
-  getUserZonesWithPermission 
-} from 'access-zones';
-
-// Check specific role
-userHasRole(user, 'Editor'); // boolean
-
-// Check any of multiple roles  
-userHasAnyRole(user, ['Editor', 'Admin']); // boolean
-
-// Check all roles required
-userHasAllRoles(user, ['Editor', 'Viewer']); // boolean
-
-// Get all zones user has access to
-getUserZones(user); // ['content', 'admin', 'users']
-
-// Get zones where user has specific permission
-getUserZonesWithPermission(user, 'create'); // ['content']
-```
-
-## Advanced Usage
-
-### Custom Zones
-
-Define your own zones for your application:
-
-```typescript
-const CUSTOM_ZONES = [
-  'products',
-  'orders', 
-  'inventory',
-  'analytics',
-  'integrations'
-] as const;
-
-type CustomZone = typeof CUSTOM_ZONES[number];
-
-// Use with your custom zones
-const permissions: Partial<Record<CustomZone, number>> = {
-  products: PERMISSION_MASKS.ADMIN,
-  orders: PERMISSION_MASKS.READ | PERMISSION_MASKS.UPDATE
+// ✅ Extended role - with optional database fields
+const extendedRole = {
+  id: 'editor',
+  name: 'Content Editor',
+  description: 'Can edit content', // Optional: not validated by RBAC
+  createdAt: new Date(),           // Optional: not validated by RBAC
+  updatedAt: new Date(),           // Optional: not validated by RBAC
+  access: { content: PERMISSION_MASKS.READ }
 };
 ```
 
-### Item-Level Permissions
-
-Control access to individual items with global and user-specific overrides:
-
-```typescript
-import { getUserPermissions } from 'access-zones';
-
-const item = {
-  uid: 'owner123',
-  settings: {
-    access: {
-      global: PERMISSION_MASKS.READ, // Everyone can read
-      users: [
-        { uid: 'user456', access: PERMISSION_MASKS.ADMIN } // Specific user gets admin
-      ]
-    }
-  }
-};
-
-const userPermissions = getUserPermissions(user, item, 'content');
-// Returns permission object based on ownership, user-specific, or global settings
-```
-
-### Database Integration
-
-The library is database-agnostic. Here's an example with Prisma:
-
-```typescript
-// Your database models
-interface DatabaseRole {
-  id: string;
-  name: string;
-  permissions: Array<{
-    zone: { name: string };
-    permission: number;
-  }>;
-}
-
-// Transform to library format
-function transformRole(dbRole: DatabaseRole): NormalizedRole {
-  return {
-    id: dbRole.id,
-    name: dbRole.name,
-    access: dbRole.permissions.reduce((acc, perm) => {
-      acc[perm.zone.name] = perm.permission;
-      return acc;
-    }, {} as Record<string, number>)
-  };
-}
-```
-
-## Multi-Tenancy
-
-The `access-zones` library focuses purely on role-based permissions and does **not** handle multi-tenancy directly. This is by design - tenant isolation should be handled at the database query level for better security and performance.
-
-### Recommended Approach
-
-1. **Database-Level Isolation**: Always filter by `tenantId` in your database queries
-2. **Service-Level Enforcement**: Include tenant context in your service methods
-3. **RBAC for Permissions**: Use this library for role-based permissions within each tenant
-
-```typescript
-// ✅ Good: Tenant isolation at database level
-class UserService {
-  async getUserPermissions(userId: string, tenantId: string) {
-    // Database query automatically filters by tenantId
-    const user = await db.user.findUnique({
-      where: { id: userId, tenantId },
-      include: { roles: { include: { permissions: true } } }
-    });
-    
-    // Transform to RBAC format (no tenant info needed)
-    return transformDatabaseUser(user);
-  }
-  
-  async checkPermission(userId: string, tenantId: string, permissions: AccessZonePermission) {
-    const user = await this.getUserPermissions(userId, tenantId);
-    return checkPermission(permissions, user.roles);
-  }
-}
-
-// ❌ Avoid: Mixing tenant logic with RBAC
-// Don't put tenantId in the RBAC types - handle it in your data layer
-```
-
-### Benefits of This Approach
-
-- **Security**: Complete tenant isolation at the database level
-- **Performance**: Database indexes can optimize tenant-filtered queries  
-- **Simplicity**: RBAC library focuses on permissions, not tenant management
-- **Flexibility**: Use any tenant isolation strategy (row-level security, separate schemas, etc.)
-
-See the [database integration example](./examples/database-integration.ts) for a complete implementation.
-
-## Performance
-
-The library is optimized for high-performance applications:
-
-- **O(1) permission checking** using bitwise operations
-- **Minimal memory footprint** with bitfield storage
-- **Zero runtime dependencies** (except Zod for validation)
-- **Tree-shakeable** - only import what you need
-
-## TypeScript Support
-
-Full TypeScript support with comprehensive type definitions:
-
-```typescript
-import type { 
-  Permission,
-  AccessZonePermission,
-  NormalizedRole,
-  UserWithRoles,
-  AccessControlException 
-} from 'access-zones';
-```
-
-## Error Handling
-
-```typescript
-import { AccessControlException } from 'access-zones';
-
-try {
-  assertAccess(requiredPermissions, userRoles);
-} catch (error) {
-  if (error instanceof AccessControlException) {
-    switch (error.status) {
-      case 'unauthorized':
-        // User not authenticated
-        break;
-      case 'forbidden':
-        // User authenticated but lacks permission
-        break;
-      case 'invalid_permission':
-        // Invalid permission configuration
-        break;
-    }
-  }
-}
-```
-
-## Testing
-
-The library includes comprehensive tests:
-
-```bash
-npm test              # Run tests
-npm run test:watch    # Run tests in watch mode  
-npm run test:coverage # Run tests with coverage
-```
+This approach keeps the library focused on permissions while allowing flexible database schemas.
 
 ## Contributing
 

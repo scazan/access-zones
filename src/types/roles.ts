@@ -1,16 +1,20 @@
 /**
  * Basic role interface - database agnostic
+ * Note: Only id and name are required for RBAC functionality.
+ * Additional fields like description, createdAt, updatedAt can be included in your database models.
  */
 export interface BaseRole {
   id: string;
   name: string;
   description?: string | null;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
 /**
  * Access zone interface - database agnostic
+ * Note: Only id and name are required for RBAC functionality.
+ * Additional fields can be included in your database models.
  */
 export interface BaseAccessZone {
   id: string;
@@ -43,6 +47,8 @@ export interface NormalizedRole {
 
 /**
  * User interface - database agnostic
+ * Note: Only id is required for RBAC functionality.
+ * Additional fields like email, createdAt, etc. can be included in your database models.
  */
 export interface BaseUser {
   id: string;
