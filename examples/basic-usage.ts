@@ -33,7 +33,6 @@ const moderatorRole: NormalizedRole = {
 // Create user with multiple roles
 const user: UserWithRoles = {
   id: 'user123',
-  siteId: 'site456',
   roles: [editorRole, moderatorRole]
 };
 
@@ -107,7 +106,6 @@ const customRole: NormalizedRole = {
 
 const inventoryUser: UserWithRoles = {
   id: 'inv-user',
-  siteId: 'site456',
   roles: [customRole]
 };
 

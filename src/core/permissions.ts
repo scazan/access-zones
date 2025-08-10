@@ -71,12 +71,12 @@ export function assertAccess(
  * @throws Error if access is denied
  */
 export function assertDataAccess(
-  data: Partial<{ userId: string; siteId: string }> | undefined,
+  data: Partial<{ userId: string }> | undefined,
   accessNeeded: AccessZonePermission,
   user: UserWithZonePermissions,
 ): boolean {
-  // Allow access if user owns the data and it's in their site
-  if (data?.userId === user.id && data?.siteId === user.siteId) {
+  // Allow access if user owns the data
+  if (data?.userId === user.id) {
     return true;
   }
 

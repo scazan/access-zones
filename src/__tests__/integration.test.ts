@@ -16,16 +16,15 @@ describe('Integration tests', () => {
     id: 'role1',
     name: 'Content Manager',
     description: 'Can manage content',
-    siteId: 'site1',
     createdAt: new Date(),
     updatedAt: new Date(),
     access: [
       {
-        zone: { id: 'zone1', name: 'content', siteId: 'site1' },
+        zone: { id: 'zone1', name: 'content' },
         permission: PERMISSION_MASKS.CREATE | PERMISSION_MASKS.READ | PERMISSION_MASKS.UPDATE,
       },
       {
-        zone: { id: 'zone2', name: 'users', siteId: 'site1' },
+        zone: { id: 'zone2', name: 'users' },
         permission: PERMISSION_MASKS.READ,
       },
     ],
@@ -33,7 +32,6 @@ describe('Integration tests', () => {
 
   const mockUser: UserWithRoles = {
     id: 'user1',
-    siteId: 'site1',
     roles: [normalizeRole(mockRoleWithAccess)],
   };
 

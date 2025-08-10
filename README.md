@@ -139,7 +139,7 @@ try {
 Check access to specific data items, considering ownership.
 
 ```typescript
-const data = { userId: 'user123', siteId: 'site456' };
+const data = { userId: 'user123' };
 const needed = { content: PERMISSION_MASKS.UPDATE };
 
 // Allows access if user owns the data OR has the required permissions
@@ -306,6 +306,49 @@ function transformRole(dbRole: DatabaseRole): NormalizedRole {
   };
 }
 ```
+
+## Multi-Tenancy
+
+The `access-zones` library focuses purely on role-based permissions and does **not** handle multi-tenancy directly. This is by design - tenant isolation should be handled at the database query level for better security and performance.
+
+### Recommended Approach
+
+1. **Database-Level Isolation**: Always filter by `tenantId` in your database queries
+2. **Service-Level Enforcement**: Include tenant context in your service methods
+3. **RBAC for Permissions**: Use this library for role-based permissions within each tenant
+
+```typescript
+// ✅ Good: Tenant isolation at database level
+class UserService {
+  async getUserPermissions(userId: string, tenantId: string) {
+    // Database query automatically filters by tenantId
+    const user = await db.user.findUnique({
+      where: { id: userId, tenantId },
+      include: { roles: { include: { permissions: true } } }
+    });
+    
+    // Transform to RBAC format (no tenant info needed)
+    return transformDatabaseUser(user);
+  }
+  
+  async checkPermission(userId: string, tenantId: string, permissions: AccessZonePermission) {
+    const user = await this.getUserPermissions(userId, tenantId);
+    return checkPermission(permissions, user.roles);
+  }
+}
+
+// ❌ Avoid: Mixing tenant logic with RBAC
+// Don't put tenantId in the RBAC types - handle it in your data layer
+```
+
+### Benefits of This Approach
+
+- **Security**: Complete tenant isolation at the database level
+- **Performance**: Database indexes can optimize tenant-filtered queries  
+- **Simplicity**: RBAC library focuses on permissions, not tenant management
+- **Flexibility**: Use any tenant isolation strategy (row-level security, separate schemas, etc.)
+
+See the [database integration example](./examples/database-integration.ts) for a complete implementation.
 
 ## Performance
 

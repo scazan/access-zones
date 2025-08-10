@@ -5,7 +5,6 @@ import { z } from 'zod';
  */
 export const AccessRoleSchema = z.object({
   id: z.string(),
-  siteId: z.string(),
   createdAt: z.date(),
   updatedAt: z.date(),
   name: z.string(),

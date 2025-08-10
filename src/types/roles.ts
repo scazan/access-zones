@@ -5,7 +5,6 @@ export interface BaseRole {
   id: string;
   name: string;
   description?: string | null;
-  siteId: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -16,7 +15,6 @@ export interface BaseRole {
 export interface BaseAccessZone {
   id: string;
   name: string;
-  siteId: string;
 }
 
 /**
@@ -48,7 +46,6 @@ export interface NormalizedRole {
  */
 export interface BaseUser {
   id: string;
-  siteId: string;
   email?: string;
 }
 

@@ -17,16 +17,15 @@ describe('Role management', () => {
     id: 'role1',
     name: 'Editor',
     description: 'Can edit content',
-    siteId: 'site1',
     createdAt: new Date(),
     updatedAt: new Date(),
     access: [
       {
-        zone: { id: 'zone1', name: 'content', siteId: 'site1' },
+        zone: { id: 'zone1', name: 'content' },
         permission: PERMISSION_MASKS.CREATE | PERMISSION_MASKS.READ | PERMISSION_MASKS.UPDATE,
       },
       {
-        zone: { id: 'zone2', name: 'admin', siteId: 'site1' },
+        zone: { id: 'zone2', name: 'admin' },
         permission: PERMISSION_MASKS.READ,
       },
     ],
@@ -34,7 +33,6 @@ describe('Role management', () => {
 
   const mockUser: UserWithRoles = {
     id: 'user1',
-    siteId: 'site1',
     roles: [
       {
         id: 'role1',

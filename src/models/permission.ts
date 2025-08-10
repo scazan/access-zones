@@ -43,7 +43,6 @@ export const AccessControlledItemSchema = z.object({
     })
   ]).optional(),
   userId: z.string().optional(),
-  siteId: z.string().optional(),
   settings: z.object({
     access: ItemAccessSettingsSchema.optional(),
     permissions: z.number().optional(),

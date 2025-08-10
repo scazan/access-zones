@@ -7,13 +7,18 @@ import {
 } from 'access-zones';
 
 // Example: Database Integration
+//
+// This example shows how to integrate with a database while handling multi-tenancy.
+// Important: Tenant isolation should be handled at the database query level, not in the RBAC library.
+// The RBAC library focuses purely on role-based permissions within a tenant context.
 
 // Simulate database models (e.g., Prisma, TypeORM, etc.)
+// Note: Multi-tenancy is handled at the database query level, not in the RBAC library
 interface DatabaseRole {
   id: string;
   name: string;
   description: string;
-  siteId: string;
+  tenantId: string; // Tenant isolation handled in database queries
   createdAt: Date;
   updatedAt: Date;
   permissions: Array<{
@@ -21,7 +26,6 @@ interface DatabaseRole {
     zone: {
       id: string;
       name: string;
-      siteId: string;
     };
     permission: number;
   }>;
@@ -30,7 +34,7 @@ interface DatabaseRole {
 interface DatabaseUser {
   id: string;
   email: string;
-  siteId: string;
+  tenantId: string; // Tenant isolation handled in database queries
   roles: Array<{
     roleId: string;
     role: DatabaseRole;
@@ -43,7 +47,6 @@ function transformDatabaseRole(dbRole: DatabaseRole): RoleWithAccess {
     id: dbRole.id,
     name: dbRole.name,
     description: dbRole.description,
-    siteId: dbRole.siteId,
     createdAt: dbRole.createdAt,
     updatedAt: dbRole.updatedAt,
     access: dbRole.permissions.map(perm => ({
@@ -62,7 +65,6 @@ function transformDatabaseUser(dbUser: DatabaseUser) {
 
   return {
     id: dbUser.id,
-    siteId: dbUser.siteId,
     email: dbUser.email,
     roles: normalizedRoles
   };
@@ -73,18 +75,18 @@ const mockDatabaseRole: DatabaseRole = {
   id: 'role-123',
   name: 'Content Manager',
   description: 'Can manage all content',
-  siteId: 'site-456',
+  tenantId: 'tenant-456', // Tenant isolation handled at query level
   createdAt: new Date(),
   updatedAt: new Date(),
   permissions: [
     {
       id: 'perm-1',
-      zone: { id: 'zone-1', name: 'content', siteId: 'site-456' },
+      zone: { id: 'zone-1', name: 'content' },
       permission: PERMISSION_MASKS.CREATE | PERMISSION_MASKS.READ | PERMISSION_MASKS.UPDATE
     },
     {
       id: 'perm-2', 
-      zone: { id: 'zone-2', name: 'files', siteId: 'site-456' },
+      zone: { id: 'zone-2', name: 'files' },
       permission: PERMISSION_MASKS.READ | PERMISSION_MASKS.UPDATE
     }
   ]
@@ -93,7 +95,7 @@ const mockDatabaseRole: DatabaseRole = {
 const mockDatabaseUser: DatabaseUser = {
   id: 'user-789',
   email: 'user@example.com',
-  siteId: 'site-456',
+  tenantId: 'tenant-456', // Tenant isolation handled at query level
   roles: [
     {
       roleId: 'role-123',
@@ -117,20 +119,33 @@ console.log('Can edit content:', canEditContent);
 
 // Example service class for database operations
 class PermissionService {
-  async getUserPermissions(userId: string) {
-    // Simulate database query
-    const dbUser = mockDatabaseUser; // In real app: await db.user.findUnique(...)
+  // Proper tenant isolation: always filter by tenantId in database queries
+  async getUserPermissions(userId: string, tenantId: string) {
+    // Simulate database query with tenant isolation
+    // In real app: await db.user.findUnique({ 
+    //   where: { id: userId, tenantId }, 
+    //   include: { roles: { include: { permissions: { include: { zone: true } } } } }
+    // })
+    const dbUser = mockDatabaseUser;
     return transformDatabaseUser(dbUser);
   }
 
-  async checkUserPermission(userId: string, requiredPermissions: Record<string, number>) {
-    const user = await this.getUserPermissions(userId);
+  async checkUserPermission(userId: string, tenantId: string, requiredPermissions: Record<string, number>) {
+    const user = await this.getUserPermissions(userId, tenantId);
     return checkPermission(requiredPermissions, user.roles);
   }
 
-  async assertUserPermission(userId: string, requiredPermissions: Record<string, number>) {
-    const user = await this.getUserPermissions(userId);
+  async assertUserPermission(userId: string, tenantId: string, requiredPermissions: Record<string, number>) {
+    const user = await this.getUserPermissions(userId, tenantId);
     return assertAccess(requiredPermissions, user.roles);
+  }
+
+  // Example: Get all users in a tenant with specific permission
+  async getUsersWithPermission(tenantId: string, zone: string, permission: number) {
+    // Database query would filter by tenantId first, then check permissions
+    // This ensures complete tenant isolation at the data layer
+    // In real app: complex query joining users, roles, permissions filtered by tenantId
+    return []; // Placeholder
   }
 }
 
@@ -138,7 +153,8 @@ class PermissionService {
 const permissionService = new PermissionService();
 
 async function exampleUsage() {
-  const hasPermission = await permissionService.checkUserPermission('user-789', {
+  const tenantId = 'tenant-456';
+  const hasPermission = await permissionService.checkUserPermission('user-789', tenantId, {
     content: PERMISSION_MASKS.READ
   });
   

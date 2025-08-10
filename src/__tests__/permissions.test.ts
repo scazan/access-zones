@@ -90,13 +90,12 @@ describe('Permission checking', () => {
   describe('assertDataAccess', () => {
     const mockUser: UserWithZonePermissions = {
       id: 'user1',
-      siteId: 'site1',
       roles: mockRoles,
       access: {},
     };
 
     it('should return true for owned data', () => {
-      const data = { userId: 'user1', siteId: 'site1' };
+      const data = { userId: 'user1' };
       const needed = { content: PERMISSION_MASKS.DELETE };
       
       const result = assertDataAccess(data, needed, mockUser);
@@ -104,7 +103,7 @@ describe('Permission checking', () => {
     });
 
     it('should check permissions for non-owned data', () => {
-      const data = { userId: 'other-user', siteId: 'site1' };
+      const data = { userId: 'other-user' };
       const needed = { content: PERMISSION_MASKS.READ };
       
       const result = assertDataAccess(data, needed, mockUser);
@@ -112,7 +111,7 @@ describe('Permission checking', () => {
     });
 
     it('should throw for insufficient permissions on non-owned data', () => {
-      const data = { userId: 'other-user', siteId: 'site1' };
+      const data = { userId: 'other-user' };
       const needed = { content: PERMISSION_MASKS.DELETE };
       
       expect(() => assertDataAccess(data, needed, mockUser)).toThrow('Unauthorized');

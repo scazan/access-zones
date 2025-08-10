@@ -5,7 +5,6 @@ import { z } from 'zod';
  */
 export const AccessZoneSchema = z.object({
   id: z.string(),
-  siteId: z.string(),
   name: z.string(),
 });
 
