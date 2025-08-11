@@ -11,15 +11,9 @@ export const PERMISSION_MASKS = {
 } as const;
 
 /**
- * Legacy alias for backward compatibility
- * @deprecated Use PERMISSION_MASKS instead
- */
-export const masks = PERMISSION_MASKS;
-
-/**
  * Permission mask for common permission combinations
  */
-export const permissionMask = {
+export const permission = {
   CREATE: PERMISSION_MASKS.CREATE,
   READ: PERMISSION_MASKS.READ,
   UPDATE: PERMISSION_MASKS.UPDATE,

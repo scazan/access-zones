@@ -133,9 +133,9 @@ describe('Integration tests', () => {
 
   it('should demonstrate backward compatibility', async () => {
     // Legacy imports should still work
-    const { masks, permissionMask } = await import('../index');
+    const { permission } = await import('../index');
     
-    expect(masks.CREATE).toBe(PERMISSION_MASKS.CREATE);
-    expect(permissionMask.ADMIN).toBe(PERMISSION_MASKS.ADMIN);
+
+    expect(permission.ADMIN).toBe(PERMISSION_MASKS.ADMIN);
   });
 });

@@ -23,4 +23,4 @@ export {
 } from './models';
 
 // Legacy exports for backward compatibility
-export { PERMISSION_MASKS as masks, permissionMask } from './constants/masks';
+export { permission } from './constants/masks';
