@@ -37,7 +37,7 @@ export function checkPermission(
   // Check each required permission
   Object.entries(neededCopy).forEach(([section, neededAccessBits]) => {
     const userPermissions = currentPermissions[section] || 0;
-    const hasAccess = (neededAccessBits & userPermissions) === neededAccessBits;
+    const hasAccess = (neededAccessBits! & userPermissions) === neededAccessBits!;
     accessCount += hasAccess ? 1 : 0;
   });
 

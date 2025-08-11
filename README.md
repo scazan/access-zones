@@ -34,8 +34,7 @@ pnpm add access-zones
 import { 
   checkPermission, 
   assertAccess, 
-  PERMISSION_MASKS,
-  DEFAULT_ACCESS_ZONES 
+  PERMISSION_MASKS
 } from 'access-zones';
 
 // Define user roles
@@ -78,13 +77,21 @@ PERMISSION_MASKS.ADMIN   // 0b1111 (15) - All permissions
 
 ### Access Zones
 
-Organize permissions by functional areas:
+Define your own zones based on your application's functional areas:
 
 ```typescript
-import { DEFAULT_ACCESS_ZONES } from 'access-zones';
+// Define zones that make sense for your application
+const myAppZones = ['content', 'users', 'admin', 'billing', 'reports'];
 
-// Built-in zones: content, users, admin, settings, reports, 
-// billing, support, api, files, notifications
+// Use them in your roles
+const role = {
+  id: 'editor',
+  name: 'Content Editor', 
+  access: {
+    content: PERMISSION_MASKS.CREATE | PERMISSION_MASKS.READ | PERMISSION_MASKS.UPDATE,
+    users: PERMISSION_MASKS.READ
+  }
+};
 ```
 
 ### Role Structure

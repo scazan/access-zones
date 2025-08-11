@@ -1,6 +1,7 @@
 import {
   normalizeRole,
   checkPermission,
+  assertAccess,
   PERMISSION_MASKS,
   RoleWithAccess,
   NormalizedRole
