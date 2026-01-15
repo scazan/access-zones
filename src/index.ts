@@ -7,7 +7,7 @@ export * from './types';
 // Core functionality
 export * from './core';
 
-// Model types (inferred from Zod schemas)
+// Model types
 export type {
   Permission,
   AccessZonePermission,
@@ -18,9 +18,11 @@ export type {
   AccessRolesOnUsers,
   AccessRolesOnPages,
   AccessRolesOnTickets,
-  AccessZone,
   AccessRolePermissionOnAccessZone,
 } from './models';
+
+// Re-export AccessZoneModel as AccessZone for external consumers
+export type { AccessZoneModel as AccessZone } from './models';
 
 // Legacy exports for backward compatibility
 export { permission } from './constants/masks';

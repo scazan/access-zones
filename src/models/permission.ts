@@ -1,59 +1,42 @@
-import { z } from 'zod';
+/**
+ * Individual permission with CRUD operations
+ */
+export interface Permission {
+  create: boolean;
+  read: boolean;
+  update: boolean;
+  delete: boolean;
+}
 
 /**
- * Zod schema for individual permission
+ * Access zone permission (zone name to bitfield mapping)
  */
-export const PermissionSchema = z.object({
-  create: z.boolean(),
-  read: z.boolean(),
-  update: z.boolean(),
-  delete: z.boolean(),
-});
+export type AccessZonePermission = Partial<Record<string, number>>;
 
 /**
- * Zod schema for access zone permission (zone name to bitfield mapping)
+ * Zone permissions (zone name to permission object mapping)
  */
-export const AccessZonePermissionSchema = z.object({}).catchall(z.number()).partial();
+export type ZonePermissions = Record<string, Permission>;
 
 /**
- * Zod schema for zone permissions (zone name to permission object mapping)
+ * Item access settings
  */
-export const ZonePermissionsSchema = z.record(z.string(), PermissionSchema);
+export interface ItemAccessSettings {
+  global?: Permission | number;
+  users?: Array<{
+    uid: string;
+    access: Permission | number;
+  }>;
+}
 
 /**
- * Zod schema for item access settings
+ * Access controlled item
  */
-export const ItemAccessSettingsSchema = z.object({
-  global: z.union([PermissionSchema, z.number()]).optional(),
-  users: z.array(z.object({
-    uid: z.string(),
-    access: z.union([PermissionSchema, z.number()]),
-  })).optional(),
-});
-
-/**
- * Zod schema for access controlled item
- */
-export const AccessControlledItemSchema = z.object({
-  uid: z.union([
-    z.string(),
-    z.object({
-      id: z.string(),
-      email: z.string().optional(),
-    })
-  ]).optional(),
-  userId: z.string().optional(),
-  settings: z.object({
-    access: ItemAccessSettingsSchema.optional(),
-    permissions: z.number().optional(),
-  }).optional(),
-});
-
-/**
- * Type inference from schemas
- */
-export type Permission = z.infer<typeof PermissionSchema>;
-export type AccessZonePermission = z.infer<typeof AccessZonePermissionSchema>;
-export type ZonePermissions = z.infer<typeof ZonePermissionsSchema>;
-export type ItemAccessSettings = z.infer<typeof ItemAccessSettingsSchema>;
-export type AccessControlledItem = z.infer<typeof AccessControlledItemSchema>;
+export interface AccessControlledItem {
+  uid?: string | { id: string; email?: string };
+  userId?: string;
+  settings?: {
+    access?: ItemAccessSettings;
+    permissions?: number;
+  };
+}

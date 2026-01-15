@@ -1,41 +1,31 @@
-import { z } from 'zod';
+/**
+ * Access role - minimal fields required for RBAC
+ */
+export interface AccessRole {
+  id: string;
+  name: string;
+}
 
 /**
- * Zod schema for access role - focused on permission-related fields only
+ * Access roles on users junction table
  */
-export const AccessRoleSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-});
+export interface AccessRolesOnUsers {
+  userId: string;
+  accessRoleId: string;
+}
 
 /**
- * Zod schema for access roles on users junction table
+ * Access roles on pages junction table
  */
-export const AccessRolesOnUsersSchema = z.object({
-  userId: z.string(),
-  accessRoleId: z.string(),
-});
+export interface AccessRolesOnPages {
+  pageId: string;
+  accessRoleId: string;
+}
 
 /**
- * Zod schema for access roles on pages junction table
+ * Access roles on tickets junction table
  */
-export const AccessRolesOnPagesSchema = z.object({
-  pageId: z.string(),
-  accessRoleId: z.string(),
-});
-
-/**
- * Zod schema for access roles on tickets junction table
- */
-export const AccessRolesOnTicketsSchema = z.object({
-  ticketId: z.string(),
-  accessRoleId: z.string(),
-});
-
-/**
- * Type inference from schemas
- */
-export type AccessRole = z.infer<typeof AccessRoleSchema>;
-export type AccessRolesOnUsers = z.infer<typeof AccessRolesOnUsersSchema>;
-export type AccessRolesOnPages = z.infer<typeof AccessRolesOnPagesSchema>;
-export type AccessRolesOnTickets = z.infer<typeof AccessRolesOnTicketsSchema>;
+export interface AccessRolesOnTickets {
+  ticketId: string;
+  accessRoleId: string;
+}

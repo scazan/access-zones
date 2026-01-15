@@ -1,24 +1,18 @@
-import { z } from 'zod';
+/**
+ * Access zone entity
+ * Note: This is exported as AccessZone from index.ts
+ * Internally named AccessZoneModel to avoid conflict with AccessZone string type in constants
+ */
+export interface AccessZoneModel {
+  id: string;
+  name: string;
+}
 
 /**
- * Zod schema for access zone
+ * Access role permission on access zone junction table
  */
-export const AccessZoneSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-});
-
-/**
- * Zod schema for access role permission on access zone junction table
- */
-export const AccessRolePermissionOnAccessZoneSchema = z.object({
-  accessRoleId: z.string(),
-  accessZoneId: z.string(),
-  permission: z.number(),
-});
-
-/**
- * Type inference from schemas
- */
-export type AccessZone = z.infer<typeof AccessZoneSchema>;
-export type AccessRolePermissionOnAccessZone = z.infer<typeof AccessRolePermissionOnAccessZoneSchema>;
+export interface AccessRolePermissionOnAccessZone {
+  accessRoleId: string;
+  accessZoneId: string;
+  permission: number;
+}
