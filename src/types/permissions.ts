@@ -42,7 +42,6 @@ export interface ItemAccessSettings {
 export interface AccessControlledItem {
   uid?: string | { id: string; email?: string };
   userId?: string;
-  siteId?: string;
   settings?: {
     access?: ItemAccessSettings;
     permissions?: number;
