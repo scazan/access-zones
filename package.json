@@ -1,6 +1,6 @@
 {
   "name": "access-zones",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "description": "A flexible role-based access control (RBAC) library with zone-based permissions using efficient bitfield operations",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
