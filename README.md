@@ -8,12 +8,11 @@ A flexible, high-performance role-based access control (RBAC) library with zone-
 
 ## Features
 
+- **Role Aggregation**: Combine multiple roles with OR logic for flexible inheritance
 - **High Performance**: Bitfield operations for O(1) permission checking
 - **Zone-Based**: Organize permissions by functional areas (content, users, admin, etc.)
-- **Role Aggregation**: Combine multiple roles with OR logic for flexible inheritance
 - **Type-Safe**: Full TypeScript support with comprehensive type definitions
 - **Zero Dependencies**: No runtime dependencies
-- **Well Tested**: 100% test coverage
 - **Database-Agnostic**: Works with any database or ORM
 
 ## Installation
