@@ -28,6 +28,7 @@ export const CURRENT_PERMISSION_MASKS = [
   PERMISSION_MASKS.READ,
   PERMISSION_MASKS.UPDATE,
   PERMISSION_MASKS.DELETE,
+  PERMISSION_MASKS.ADMIN,
 ] as const;
 
 /**
@@ -143,15 +144,16 @@ export function describeBitField(bitField: number): string {
   }
 
   const permissions: string[] = [];
-  
+
   // Check known permission bits
+  if (bitField & PERMISSION_MASKS.ADMIN) permissions.push('ADMIN');
   if (bitField & PERMISSION_MASKS.CREATE) permissions.push('CREATE');
   if (bitField & PERMISSION_MASKS.READ) permissions.push('READ');
   if (bitField & PERMISSION_MASKS.UPDATE) permissions.push('UPDATE');
   if (bitField & PERMISSION_MASKS.DELETE) permissions.push('DELETE');
-  
+
   // Check for unknown/future permission bits
-  const knownBits = PERMISSION_MASKS.CREATE | PERMISSION_MASKS.READ | 
+  const knownBits = PERMISSION_MASKS.ADMIN | PERMISSION_MASKS.CREATE | PERMISSION_MASKS.READ |
                    PERMISSION_MASKS.UPDATE | PERMISSION_MASKS.DELETE;
   const unknownBits = bitField & ~knownBits;
   

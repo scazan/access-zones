@@ -8,7 +8,7 @@ import { validateBitField, validatePermissionMask } from './validation';
  * @returns Bitfield number representing the permissions
  */
 export function toBitField(permission: Permission): number {
-  const maskArr: Array<keyof Permission> = ["create", "read", "update", "delete"];
+  const maskArr: Array<keyof Permission> = ["create", "read", "update", "delete", "admin"];
 
   return maskArr.reduce((accumPermissions, key) => {
     const permissionMask = permission[key] ? PERMISSION_MASKS[key.toUpperCase() as keyof typeof PERMISSION_MASKS] : 0;
@@ -24,12 +24,13 @@ export function toBitField(permission: Permission): number {
  */
 export function fromBitField(bitField: number): Permission {
   validateBitField(bitField, 'bitfield conversion input');
-  
+
   return {
     create: (PERMISSION_MASKS.CREATE & bitField) === PERMISSION_MASKS.CREATE,
     read: (PERMISSION_MASKS.READ & bitField) === PERMISSION_MASKS.READ,
     update: (PERMISSION_MASKS.UPDATE & bitField) === PERMISSION_MASKS.UPDATE,
     delete: (PERMISSION_MASKS.DELETE & bitField) === PERMISSION_MASKS.DELETE,
+    admin: (PERMISSION_MASKS.ADMIN & bitField) === PERMISSION_MASKS.ADMIN,
   };
 }
 

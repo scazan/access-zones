@@ -66,11 +66,12 @@ Permissions use bitfield operations for maximum efficiency:
 ```typescript
 import { PERMISSION_MASKS } from 'access-zones';
 
-PERMISSION_MASKS.CREATE  // 0b1000 (8)  - Can create new items
-PERMISSION_MASKS.READ    // 0b0100 (4)  - Can read/view items
-PERMISSION_MASKS.UPDATE  // 0b0010 (2)  - Can modify items
-PERMISSION_MASKS.DELETE  // 0b0001 (1)  - Can delete items
-PERMISSION_MASKS.ADMIN   // 0b1111 (15) - All permissions
+PERMISSION_MASKS.ADMIN   // 0b10000 (16) - Admin permission
+PERMISSION_MASKS.CREATE  // 0b01000 (8)  - Can create new items
+PERMISSION_MASKS.READ    // 0b00100 (4)  - Can read/view items
+PERMISSION_MASKS.UPDATE  // 0b00010 (2)  - Can modify items
+PERMISSION_MASKS.DELETE  // 0b00001 (1)  - Can delete items
+PERMISSION_MASKS.ALL     // 0b01111 (15) - All CRUD permissions
 ```
 
 Combine permissions with bitwise OR:
@@ -79,8 +80,11 @@ Combine permissions with bitwise OR:
 // Read + Update permissions
 const editorPermissions = PERMISSION_MASKS.READ | PERMISSION_MASKS.UPDATE; // 6
 
-// Full CRUD permissions
-const adminPermissions = PERMISSION_MASKS.ADMIN; // 15
+// All CRUD permissions
+const crudPermissions = PERMISSION_MASKS.ALL; // 15
+
+// Full permissions including admin
+const fullPermissions = PERMISSION_MASKS.ALL | PERMISSION_MASKS.ADMIN; // 31
 ```
 
 ### Access Zones
@@ -299,7 +303,7 @@ The library exports the following TypeScript types:
 ```typescript
 import type {
   // Permission types
-  Permission,              // { create: boolean, read: boolean, update: boolean, delete: boolean }
+  Permission,              // { create, read, update, delete, admin: boolean }
   AccessZonePermission,    // Partial<Record<string, number>>
   ZonePermissions,         // Record<string, Permission>
   ItemAccessSettings,      // Item-level access configuration

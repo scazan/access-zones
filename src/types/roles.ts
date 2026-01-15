@@ -62,16 +62,13 @@ export interface UserWithRoles extends BaseUser {
   roles: Array<NormalizedRole>;
 }
 
+import { Permission } from './permissions';
+
 /**
  * User with computed zone permissions
  */
 export interface UserWithZonePermissions extends UserWithRoles {
-  access: Record<string, {
-    create: boolean;
-    read: boolean;
-    update: boolean;
-    delete: boolean;
-  }>;
+  access: Record<string, Permission>;
 }
 
 /**

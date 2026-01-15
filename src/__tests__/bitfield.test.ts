@@ -9,22 +9,37 @@ describe('Bitfield utilities', () => {
         read: true,
         update: false,
         delete: false,
+        admin: false,
       };
-      
+
       const result = toBitField(permission);
       expect(result).toBe(PERMISSION_MASKS.CREATE | PERMISSION_MASKS.READ);
     });
 
-    it('should handle all permissions', () => {
+    it('should handle all CRUD permissions', () => {
       const permission = {
         create: true,
         read: true,
         update: true,
         delete: true,
+        admin: false,
       };
-      
+
       const result = toBitField(permission);
-      expect(result).toBe(PERMISSION_MASKS.ADMIN);
+      expect(result).toBe(PERMISSION_MASKS.ALL);
+    });
+
+    it('should handle all permissions including admin', () => {
+      const permission = {
+        create: true,
+        read: true,
+        update: true,
+        delete: true,
+        admin: true,
+      };
+
+      const result = toBitField(permission);
+      expect(result).toBe(PERMISSION_MASKS.ALL | PERMISSION_MASKS.ADMIN);
     });
 
     it('should handle no permissions', () => {
@@ -33,8 +48,9 @@ describe('Bitfield utilities', () => {
         read: false,
         update: false,
         delete: false,
+        admin: false,
       };
-      
+
       const result = toBitField(permission);
       expect(result).toBe(0);
     });
@@ -44,34 +60,49 @@ describe('Bitfield utilities', () => {
     it('should convert bitfield to permission object', () => {
       const bitField = PERMISSION_MASKS.CREATE | PERMISSION_MASKS.READ;
       const result = fromBitField(bitField);
-      
+
       expect(result).toEqual({
         create: true,
         read: true,
         update: false,
         delete: false,
+        admin: false,
       });
     });
 
-    it('should handle admin permissions', () => {
-      const result = fromBitField(PERMISSION_MASKS.ADMIN);
-      
+    it('should handle all CRUD permissions', () => {
+      const result = fromBitField(PERMISSION_MASKS.ALL);
+
       expect(result).toEqual({
         create: true,
         read: true,
         update: true,
         delete: true,
+        admin: false,
+      });
+    });
+
+    it('should handle all permissions including admin', () => {
+      const result = fromBitField(PERMISSION_MASKS.ALL | PERMISSION_MASKS.ADMIN);
+
+      expect(result).toEqual({
+        create: true,
+        read: true,
+        update: true,
+        delete: true,
+        admin: true,
       });
     });
 
     it('should handle no permissions', () => {
       const result = fromBitField(0);
-      
+
       expect(result).toEqual({
         create: false,
         read: false,
         update: false,
         delete: false,
+        admin: false,
       });
     });
   });
@@ -79,12 +110,12 @@ describe('Bitfield utilities', () => {
   describe('roleToBitField', () => {
     it('should convert role permissions to bitfield format', () => {
       const permissions = {
-        content: { create: true, read: true, update: false, delete: false },
-        admin: { create: false, read: true, update: true, delete: false },
+        content: { create: true, read: true, update: false, delete: false, admin: false },
+        admin: { create: false, read: true, update: true, delete: false, admin: false },
       };
-      
+
       const result = roleToBitField(permissions);
-      
+
       expect(result).toEqual({
         content: PERMISSION_MASKS.CREATE | PERMISSION_MASKS.READ,
         admin: PERMISSION_MASKS.READ | PERMISSION_MASKS.UPDATE,
