@@ -7,19 +7,19 @@ export * from './types';
 // Core functionality
 export * from './core';
 
-// Models (Zod schemas) - exported after types to avoid conflicts
-export {
-  AccessRoleSchema,
-  AccessRolesOnUsersSchema,
-  AccessRolesOnPagesSchema,
-  AccessRolesOnTicketsSchema,
-  AccessZoneSchema,
-  AccessRolePermissionOnAccessZoneSchema,
-  PermissionSchema,
-  AccessZonePermissionSchema,
-  ZonePermissionsSchema,
-  ItemAccessSettingsSchema,
-  AccessControlledItemSchema,
+// Model types (inferred from Zod schemas)
+export type {
+  Permission,
+  AccessZonePermission,
+  ZonePermissions,
+  ItemAccessSettings,
+  AccessControlledItem,
+  AccessRole,
+  AccessRolesOnUsers,
+  AccessRolesOnPages,
+  AccessRolesOnTickets,
+  AccessZone,
+  AccessRolePermissionOnAccessZone,
 } from './models';
 
 // Legacy exports for backward compatibility

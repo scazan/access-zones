@@ -16,7 +16,7 @@
     "prepublishOnly": "npm run clean && npm run build && npm test",
     "prepare": "npm run build"
   },
-  "dependencies": {
+    "dependencies": {
     "zod": "^3.22.4"
   },
   "devDependencies": {
