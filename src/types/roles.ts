@@ -73,3 +73,20 @@ export interface UserWithZonePermissions extends UserWithRoles {
     delete: boolean;
   }>;
 }
+
+/**
+ * Access role - minimal fields required for RBAC
+ */
+export interface AccessRole {
+  id: string;
+  name: string;
+}
+
+/**
+ * Access role permission on access zone junction table
+ */
+export interface AccessRolePermissionOnAccessZone {
+  accessRoleId: string;
+  accessZoneId: string;
+  permission: number;
+}

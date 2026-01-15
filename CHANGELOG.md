@@ -5,6 +5,39 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Breaking Changes
+- **Removed Zod dependency** - Replaced with pure TypeScript types
+- **Zod schemas are no longer exported** - Use the TypeScript types directly:
+  - `PermissionSchema` → `Permission`
+  - `AccessZonePermissionSchema` → `AccessZonePermission`
+  - `ZonePermissionsSchema` → `ZonePermissions`
+  - `ItemAccessSettingsSchema` → `ItemAccessSettings`
+  - `AccessControlledItemSchema` → `AccessControlledItem`
+  - `AccessRoleSchema` → `AccessRole`
+  - `AccessRolesOnUsersSchema` → removed (implementation-specific)
+  - `AccessRolesOnPagesSchema` → removed (implementation-specific)
+  - `AccessRolesOnTicketsSchema` → removed (implementation-specific)
+  - `AccessZoneSchema` → `AccessZone`
+  - `AccessRolePermissionOnAccessZoneSchema` → `AccessRolePermissionOnAccessZone`
+
+### Migration
+```typescript
+// Before
+import { PermissionSchema } from 'access-zones';
+import { z } from 'zod';
+type MyPermission = z.infer<typeof PermissionSchema>;
+
+// After
+import type { Permission } from 'access-zones';
+```
+
+### Removed
+- `zod` dependency
+- `AccessRolesOnUsers`, `AccessRolesOnPages`, `AccessRolesOnTickets` types (implementation-specific)
+- `siteId` field from `AccessControlledItem` type (implementation-specific)
+
 ## [1.0.0] - 2025-08-10
 
 ### Added
@@ -14,7 +47,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Role aggregation with OR logic
 - Item-level access control with global and user-specific permissions
 - Full TypeScript support with comprehensive type definitions
-- Zod validation schemas for runtime type checking
 - Comprehensive test suite with 100% coverage
 - Database-agnostic core design
 - Support for custom zones and permission structures
@@ -35,7 +67,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Performance
 - O(1) permission checking using bitwise operations
 - Minimal memory footprint with bitfield storage
-- Zero runtime dependencies (except Zod)
+- Zero runtime dependencies
 - Tree-shakeable exports
 
 ### Documentation
