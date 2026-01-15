@@ -342,6 +342,56 @@ const role = normalizeRole(dbRole);
 // { id: 'role-1', name: 'Editor', access: { content: 6 } }
 ```
 
+## Security
+
+The library includes multiple layers of security protection:
+
+### Bitfield Validation
+All permission bitfields are validated to prevent:
+- Negative numbers (e.g., `-1` which has all bits set)
+- Values exceeding 32-bit limit
+- Non-integer values (floats, NaN, Infinity)
+- Type coercion attacks (strings, booleans, objects)
+
+### Zone Name Validation
+Zone names are validated to prevent prototype pollution and method override attacks:
+
+```typescript
+// These zone names are REJECTED:
+'__proto__'      // Prototype pollution
+'constructor'    // Constructor override
+'toString'       // Method override
+'_internal'      // Underscore prefix
+'settings_'      // Underscore suffix
+''               // Empty string
+```
+
+### Null-Prototype Objects
+Permission objects use `Object.create(null)` internally to prevent prototype chain attacks.
+
+### Validation Functions
+
+```typescript
+import {
+  isValidZoneName,
+  validateZoneName,
+  isValidBitField,
+  validateBitField,
+  createSafeObject
+} from 'access-zones';
+
+// Check if a zone name is valid
+isValidZoneName('content');     // true
+isValidZoneName('__proto__');   // false
+
+// Validate with exception
+validateZoneName('content');    // OK
+validateZoneName('__proto__');  // throws AccessControlException
+
+// Create safe objects for your own use
+const safeObj = createSafeObject<Record<string, number>>();
+```
+
 ## Error Handling
 
 The library throws `AccessControlException` for permission failures:

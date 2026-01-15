@@ -1,6 +1,6 @@
 import { PERMISSION_MASKS } from '../constants/masks';
 import { Permission, PermissionInput } from '../types/permissions';
-import { validateBitField, validatePermissionMask } from './validation';
+import { validateBitField, validatePermissionMask, validateZoneName, createSafeObject } from './validation';
 
 /**
  * Convert a permission object to a bitfield number
@@ -37,13 +37,18 @@ export function fromBitField(bitField: number): Permission {
 /**
  * Convert role permissions object to bitfield format
  * @param permissions Object mapping zone names to permission objects
- * @returns Object mapping zone names to bitfield numbers
+ * @returns Object mapping zone names to bitfield numbers (null-prototype object)
+ * @throws {AccessControlException} If any zone name is invalid
  */
 export function roleToBitField(permissions: Record<string, Permission>): Record<string, number> {
-  return Object.entries(permissions).reduce((accum, [name, permission]) => {
-    accum[name] = toBitField(permission);
-    return accum;
-  }, {} as Record<string, number>);
+  const result = createSafeObject<Record<string, number>>();
+
+  for (const [zoneName, permission] of Object.entries(permissions)) {
+    validateZoneName(zoneName, 'zone name in permission object');
+    result[zoneName] = toBitField(permission);
+  }
+
+  return result;
 }
 
 /**

@@ -1,23 +1,28 @@
 import { NormalizedRole, RoleWithAccess, UserWithRoles, UserWithZonePermissions } from '../types/roles';
 import { ZonePermissions } from '../types/permissions';
 import { fromBitField } from './bitfield';
-import { validateBitField } from './validation';
+import { validateBitField, validateZoneName, createSafeObject } from './validation';
 
 /**
  * Transform a role with access to a normalized role format
  * @param role Role with access permissions
  * @returns Normalized role
- * @throws {AccessControlException} If any permission value is invalid
+ * @throws {AccessControlException} If any permission value or zone name is invalid
  */
 export function normalizeRole(role: RoleWithAccess): NormalizedRole {
+  const access = createSafeObject<Record<string, number>>();
+
+  for (const roleAccess of role.access) {
+    const zoneName = roleAccess.zone.name;
+    validateZoneName(zoneName, `zone name in role '${role.name}'`);
+    validateBitField(roleAccess.permission, `permission for zone '${zoneName}'`);
+    access[zoneName] = roleAccess.permission;
+  }
+
   return {
     id: role.id,
     name: role.name,
-    access: role.access.reduce<Record<string, number>>((accum, access) => {
-      validateBitField(access.permission, `permission for zone ${access.zone.name}`);
-      accum[access.zone.name] = access.permission;
-      return accum;
-    }, {}),
+    access,
   };
 }
 
@@ -34,35 +39,37 @@ export function normalizeRoles(roles: Array<RoleWithAccess>): Array<NormalizedRo
  * Collapse multiple roles into a single permission set
  * Uses OR operation to combine permissions - if any role grants access, access is granted
  * @param roles Array of normalized roles
- * @returns Combined permissions object
- * @throws {AccessControlException} If any permission value is invalid
+ * @returns Combined permissions object (null-prototype object safe from prototype pollution)
+ * @throws {AccessControlException} If any permission value or zone name is invalid
  */
 export function collapseRoles(roles: Array<NormalizedRole>): Record<string, number> {
-  return roles
-    .map((role) => role.access)
-    .reduce(
-      (accum, roleAccess) =>
-        Object.entries(roleAccess).reduce((roleAccum, [key, val]) => {
-          validateBitField(val, `permission value for zone ${key} in role`);
-          roleAccum[key] = (roleAccum[key] || 0) | val;
-          return roleAccum;
-        }, accum),
-      {} as Record<string, number>,
-    );
+  const result = createSafeObject<Record<string, number>>();
+
+  for (const role of roles) {
+    for (const [zoneName, permission] of Object.entries(role.access)) {
+      validateZoneName(zoneName, `zone name in role '${role.name}'`);
+      validateBitField(permission, `permission value for zone '${zoneName}' in role '${role.name}'`);
+      result[zoneName] = (result[zoneName] || 0) | permission;
+    }
+  }
+
+  return result;
 }
 
 /**
  * Get global permissions for a user by collapsing all their roles
  * @param user User with roles
- * @returns Zone permissions with boolean values
+ * @returns Zone permissions with boolean values (null-prototype object)
  */
 export function getGlobalPermissions(user: UserWithRoles): ZonePermissions {
   const collapsedRoles = collapseRoles(user.roles);
+  const result = createSafeObject<ZonePermissions>();
 
-  return Object.entries(collapsedRoles).reduce((accum, [key, value]) => {
-    accum[key] = fromBitField(value);
-    return accum;
-  }, {} as ZonePermissions);
+  for (const [zoneName, bitField] of Object.entries(collapsedRoles)) {
+    result[zoneName] = fromBitField(bitField);
+  }
+
+  return result;
 }
 
 /**
