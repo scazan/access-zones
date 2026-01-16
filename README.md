@@ -70,7 +70,6 @@ PERMISSION_MASKS.CREATE  // 0b01000 (8)  - Can create new items
 PERMISSION_MASKS.READ    // 0b00100 (4)  - Can read/view items
 PERMISSION_MASKS.UPDATE  // 0b00010 (2)  - Can modify items
 PERMISSION_MASKS.DELETE  // 0b00001 (1)  - Can delete items
-PERMISSION_MASKS.ALL     // 0b01111 (15) - All CRUD permissions
 ```
 
 Combine permissions with bitwise OR:
@@ -80,10 +79,11 @@ Combine permissions with bitwise OR:
 const editorPermissions = PERMISSION_MASKS.READ | PERMISSION_MASKS.UPDATE; // 6
 
 // All CRUD permissions
-const crudPermissions = PERMISSION_MASKS.ALL; // 15
+const allCrud = PERMISSION_MASKS.CREATE | PERMISSION_MASKS.READ |
+                PERMISSION_MASKS.UPDATE | PERMISSION_MASKS.DELETE; // 15
 
 // Full permissions including admin
-const fullPermissions = PERMISSION_MASKS.ALL | PERMISSION_MASKS.ADMIN; // 31
+const fullPermissions = allCrud | PERMISSION_MASKS.ADMIN; // 31
 ```
 
 ### Access Zones

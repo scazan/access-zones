@@ -234,7 +234,7 @@ describe('Security Tests - Permission Escalation Prevention', () => {
           id: 'malicious',
           name: 'Malicious Role',
           access: [
-            { zone: { name: '__proto__' }, permission: PERMISSION_MASKS.ALL },
+            { zone: { name: '__proto__' }, permission: PERMISSION_MASKS.CREATE | PERMISSION_MASKS.READ | PERMISSION_MASKS.UPDATE | PERMISSION_MASKS.DELETE },
           ],
         };
 
@@ -287,7 +287,7 @@ describe('Security Tests - Permission Escalation Prevention', () => {
           id: 'attacker',
           name: 'Attacker',
           access: [
-            { zone: { name: '__proto__' }, permission: PERMISSION_MASKS.ALL | PERMISSION_MASKS.ADMIN },
+            { zone: { name: '__proto__' }, permission: PERMISSION_MASKS.CREATE | PERMISSION_MASKS.READ | PERMISSION_MASKS.UPDATE | PERMISSION_MASKS.DELETE | PERMISSION_MASKS.ADMIN },
           ],
         };
 

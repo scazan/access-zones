@@ -153,7 +153,9 @@ describe('Bitfield Validation', () => {
       expect(describeBitField(PERMISSION_MASKS.READ)).toBe('READ');
       expect(describeBitField(PERMISSION_MASKS.UPDATE)).toBe('UPDATE');
       expect(describeBitField(PERMISSION_MASKS.DELETE)).toBe('DELETE');
-      expect(describeBitField(PERMISSION_MASKS.ALL)).toBe('CREATE | READ | UPDATE | DELETE');
+      const allCrud = PERMISSION_MASKS.CREATE | PERMISSION_MASKS.READ |
+                      PERMISSION_MASKS.UPDATE | PERMISSION_MASKS.DELETE;
+      expect(describeBitField(allCrud)).toBe('CREATE | READ | UPDATE | DELETE');
     });
 
     it('should describe combinations correctly', () => {

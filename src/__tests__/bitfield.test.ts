@@ -26,7 +26,10 @@ describe('Bitfield utilities', () => {
       };
 
       const result = toBitField(permission);
-      expect(result).toBe(PERMISSION_MASKS.ALL);
+      expect(result).toBe(
+        PERMISSION_MASKS.CREATE | PERMISSION_MASKS.READ |
+        PERMISSION_MASKS.UPDATE | PERMISSION_MASKS.DELETE
+      );
     });
 
     it('should handle all permissions including admin', () => {
@@ -39,7 +42,10 @@ describe('Bitfield utilities', () => {
       };
 
       const result = toBitField(permission);
-      expect(result).toBe(PERMISSION_MASKS.ALL | PERMISSION_MASKS.ADMIN);
+      expect(result).toBe(
+        PERMISSION_MASKS.CREATE | PERMISSION_MASKS.READ |
+        PERMISSION_MASKS.UPDATE | PERMISSION_MASKS.DELETE | PERMISSION_MASKS.ADMIN
+      );
     });
 
     it('should handle no permissions', () => {
@@ -71,7 +77,9 @@ describe('Bitfield utilities', () => {
     });
 
     it('should handle all CRUD permissions', () => {
-      const result = fromBitField(PERMISSION_MASKS.ALL);
+      const allCrud = PERMISSION_MASKS.CREATE | PERMISSION_MASKS.READ |
+                      PERMISSION_MASKS.UPDATE | PERMISSION_MASKS.DELETE;
+      const result = fromBitField(allCrud);
 
       expect(result).toEqual({
         create: true,
@@ -83,7 +91,9 @@ describe('Bitfield utilities', () => {
     });
 
     it('should handle all permissions including admin', () => {
-      const result = fromBitField(PERMISSION_MASKS.ALL | PERMISSION_MASKS.ADMIN);
+      const allPerms = PERMISSION_MASKS.CREATE | PERMISSION_MASKS.READ |
+                       PERMISSION_MASKS.UPDATE | PERMISSION_MASKS.DELETE | PERMISSION_MASKS.ADMIN;
+      const result = fromBitField(allPerms);
 
       expect(result).toEqual({
         create: true,

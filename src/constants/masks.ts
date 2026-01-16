@@ -8,7 +8,6 @@ export const PERMISSION_MASKS = {
   READ: 0b00100,   // 4
   UPDATE: 0b00010, // 2
   DELETE: 0b00001, // 1
-  ALL: 0b01111,    // 15 (all CRUD permissions)
 } as const;
 
 /**
@@ -20,5 +19,4 @@ export const permission = {
   READ: PERMISSION_MASKS.READ,
   UPDATE: PERMISSION_MASKS.UPDATE,
   DELETE: PERMISSION_MASKS.DELETE,
-  ALL: PERMISSION_MASKS.ALL,
 } as const;

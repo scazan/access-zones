@@ -45,8 +45,7 @@ import type { Permission } from 'access-zones';
 ### Changed
 - `Permission` type now includes `admin: boolean` field
 - `PERMISSION_MASKS.ADMIN` is now a separate bit (16) instead of all permissions combined
-- Added `PERMISSION_MASKS.ALL` (15) for all CRUD permissions (does not include admin)
-- Use `PERMISSION_MASKS.ALL | PERMISSION_MASKS.ADMIN` (31) for full permissions including admin
+- Removed `PERMISSION_MASKS.ALL` - combine individual masks explicitly instead
 - `UserWithZonePermissions.access` now uses `Permission` type instead of inline definition
 
 ### Removed
