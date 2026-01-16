@@ -1,6 +1,6 @@
 import { PERMISSION_MASKS } from '../constants/masks';
 import { Permission, PermissionInput } from '../types/permissions';
-import { validateBitField, validatePermissionMask } from './validation';
+import { validateBitField, validatePermissionMask, validateZoneName, createSafeObject } from './validation';
 
 /**
  * Convert a permission object to a bitfield number
@@ -8,7 +8,7 @@ import { validateBitField, validatePermissionMask } from './validation';
  * @returns Bitfield number representing the permissions
  */
 export function toBitField(permission: Permission): number {
-  const maskArr: Array<keyof Permission> = ["create", "read", "update", "delete"];
+  const maskArr: Array<keyof Permission> = ["create", "read", "update", "delete", "admin"];
 
   return maskArr.reduce((accumPermissions, key) => {
     const permissionMask = permission[key] ? PERMISSION_MASKS[key.toUpperCase() as keyof typeof PERMISSION_MASKS] : 0;
@@ -24,25 +24,31 @@ export function toBitField(permission: Permission): number {
  */
 export function fromBitField(bitField: number): Permission {
   validateBitField(bitField, 'bitfield conversion input');
-  
+
   return {
     create: (PERMISSION_MASKS.CREATE & bitField) === PERMISSION_MASKS.CREATE,
     read: (PERMISSION_MASKS.READ & bitField) === PERMISSION_MASKS.READ,
     update: (PERMISSION_MASKS.UPDATE & bitField) === PERMISSION_MASKS.UPDATE,
     delete: (PERMISSION_MASKS.DELETE & bitField) === PERMISSION_MASKS.DELETE,
+    admin: (PERMISSION_MASKS.ADMIN & bitField) === PERMISSION_MASKS.ADMIN,
   };
 }
 
 /**
  * Convert role permissions object to bitfield format
  * @param permissions Object mapping zone names to permission objects
- * @returns Object mapping zone names to bitfield numbers
+ * @returns Object mapping zone names to bitfield numbers (null-prototype object)
+ * @throws {AccessControlException} If any zone name is invalid
  */
 export function roleToBitField(permissions: Record<string, Permission>): Record<string, number> {
-  return Object.entries(permissions).reduce((accum, [name, permission]) => {
-    accum[name] = toBitField(permission);
-    return accum;
-  }, {} as Record<string, number>);
+  const result = createSafeObject<Record<string, number>>();
+
+  for (const [zoneName, permission] of Object.entries(permissions)) {
+    validateZoneName(zoneName, 'zone name in permission object');
+    result[zoneName] = toBitField(permission);
+  }
+
+  return result;
 }
 
 /**

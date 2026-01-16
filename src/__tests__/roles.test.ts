@@ -105,25 +105,28 @@ describe('Role management', () => {
   describe('getGlobalPermissions', () => {
     it('should convert collapsed roles to boolean permissions', () => {
       const result = getGlobalPermissions(mockUser);
-      
+
       expect(result).toEqual({
         content: {
           create: true,
           read: true,
           update: true,
           delete: false,
+          admin: false,
         },
         admin: {
           create: false,
           read: true,
           update: false,
           delete: false,
+          admin: false,
         },
         users: {
           create: false,
           read: true,
           update: true,
           delete: false,
+          admin: false,
         },
       });
     });

@@ -1,7 +1,14 @@
-import { hasPermission, fromBitField, combinePermissions } from '../core/bitfield';
-import { collapseRoles, normalizeRole } from '../core/roles';
+import { hasPermission, fromBitField, combinePermissions, roleToBitField } from '../core/bitfield';
+import { collapseRoles, normalizeRole, getGlobalPermissions } from '../core/roles';
 import { PERMISSION_MASKS } from '../constants/masks';
 import { AccessControlException } from '../types/errors';
+import {
+  isValidZoneName,
+  validateZoneName,
+  createSafeObject,
+  RESERVED_ZONE_NAMES,
+  MAX_ZONE_NAME_LENGTH
+} from '../core/validation';
 
 describe('Security Tests - Permission Escalation Prevention', () => {
   describe('Malicious bitfield attacks', () => {
@@ -163,6 +170,153 @@ describe('Security Tests - Permission Escalation Prevention', () => {
       expect(() => hasPermission([] as any, PERMISSION_MASKS.READ)).toThrow(AccessControlException);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       expect(() => hasPermission({} as any, PERMISSION_MASKS.READ)).toThrow(AccessControlException);
+    });
+  });
+
+  describe('Zone name security', () => {
+    describe('isValidZoneName', () => {
+      it('should accept valid zone names', () => {
+        expect(isValidZoneName('content')).toBe(true);
+        expect(isValidZoneName('users')).toBe(true);
+        expect(isValidZoneName('admin')).toBe(true);
+        expect(isValidZoneName('user-settings')).toBe(true);
+        expect(isValidZoneName('user123')).toBe(true);
+      });
+
+      it('should reject empty zone names', () => {
+        expect(isValidZoneName('')).toBe(false);
+      });
+
+      it('should reject reserved property names', () => {
+        for (const reserved of RESERVED_ZONE_NAMES) {
+          expect(isValidZoneName(reserved)).toBe(false);
+        }
+      });
+
+      it('should reject zone names starting or ending with underscore', () => {
+        expect(isValidZoneName('_internal')).toBe(false);
+        expect(isValidZoneName('internal_')).toBe(false);
+        expect(isValidZoneName('__dunder__')).toBe(false);
+      });
+
+      it('should reject zone names exceeding max length', () => {
+        const longName = 'a'.repeat(MAX_ZONE_NAME_LENGTH + 1);
+        expect(isValidZoneName(longName)).toBe(false);
+
+        const maxLengthName = 'a'.repeat(MAX_ZONE_NAME_LENGTH);
+        expect(isValidZoneName(maxLengthName)).toBe(true);
+      });
+    });
+
+    describe('validateZoneName', () => {
+      it('should not throw for valid zone names', () => {
+        expect(() => validateZoneName('content')).not.toThrow();
+        expect(() => validateZoneName('users')).not.toThrow();
+      });
+
+      it('should throw for invalid zone names', () => {
+        expect(() => validateZoneName('')).toThrow(AccessControlException);
+        expect(() => validateZoneName('__proto__')).toThrow(AccessControlException);
+        expect(() => validateZoneName('constructor')).toThrow(AccessControlException);
+        expect(() => validateZoneName('_private')).toThrow(AccessControlException);
+      });
+
+      it('should include helpful error messages', () => {
+        expect(() => validateZoneName('__proto__')).toThrow(/reserved property name/);
+        expect(() => validateZoneName('')).toThrow(/empty/);
+        expect(() => validateZoneName('_internal')).toThrow(/underscore/);
+      });
+    });
+
+    describe('Prototype pollution prevention', () => {
+      it('should reject __proto__ in normalizeRole', () => {
+        const maliciousRole = {
+          id: 'malicious',
+          name: 'Malicious Role',
+          access: [
+            { zone: { name: '__proto__' }, permission: PERMISSION_MASKS.CREATE | PERMISSION_MASKS.READ | PERMISSION_MASKS.UPDATE | PERMISSION_MASKS.DELETE },
+          ],
+        };
+
+        expect(() => normalizeRole(maliciousRole)).toThrow(AccessControlException);
+        expect(() => normalizeRole(maliciousRole)).toThrow(/reserved property name/);
+      });
+
+      it('should reject constructor in collapseRoles', () => {
+        const maliciousRoles = [
+          {
+            id: 'role1',
+            name: 'Role',
+            access: { constructor: PERMISSION_MASKS.READ },
+          },
+        ];
+
+        expect(() => collapseRoles(maliciousRoles)).toThrow(AccessControlException);
+        expect(() => collapseRoles(maliciousRoles)).toThrow(/reserved property name/);
+      });
+
+      it('should reject toString in roleToBitField', () => {
+        const maliciousPermissions = {
+          toString: { create: true, read: true, update: true, delete: true, admin: false },
+        };
+
+        expect(() => roleToBitField(maliciousPermissions)).toThrow(AccessControlException);
+      });
+
+      it('should use null-prototype objects to prevent prototype access', () => {
+        const safeObj = createSafeObject<Record<string, number>>();
+
+        // Null prototype objects don't have standard methods
+        expect(Object.getPrototypeOf(safeObj)).toBe(null);
+        expect(safeObj.hasOwnProperty).toBe(undefined);
+        expect(safeObj.toString).toBe(undefined);
+      });
+
+      it('should allow __proto__ as own property in safe objects', () => {
+        const safeObj = createSafeObject<Record<string, number>>();
+        safeObj['__proto__'] = 4;
+
+        expect(Object.hasOwn(safeObj, '__proto__')).toBe(true);
+        expect(safeObj['__proto__']).toBe(4);
+      });
+    });
+
+    describe('Real-world zone name attacks', () => {
+      it('should prevent privilege escalation via __proto__ zone', () => {
+        const attackRole = {
+          id: 'attacker',
+          name: 'Attacker',
+          access: [
+            { zone: { name: '__proto__' }, permission: PERMISSION_MASKS.CREATE | PERMISSION_MASKS.READ | PERMISSION_MASKS.UPDATE | PERMISSION_MASKS.DELETE | PERMISSION_MASKS.ADMIN },
+          ],
+        };
+
+        expect(() => normalizeRole(attackRole)).toThrow(AccessControlException);
+      });
+
+      it('should prevent method override attacks', () => {
+        const methodNames = ['hasOwnProperty', 'toString', 'valueOf', 'isPrototypeOf'];
+
+        for (const methodName of methodNames) {
+          const attackRoles = [{
+            id: 'role1',
+            name: 'Role',
+            access: { [methodName]: PERMISSION_MASKS.READ },
+          }];
+
+          expect(() => collapseRoles(attackRoles)).toThrow(AccessControlException);
+        }
+      });
+
+      it('should prevent underscore prefix attacks', () => {
+        const attackRoles = [{
+          id: 'role1',
+          name: 'Role',
+          access: { _admin: PERMISSION_MASKS.ADMIN },
+        }];
+
+        expect(() => collapseRoles(attackRoles)).toThrow(AccessControlException);
+      });
     });
   });
 

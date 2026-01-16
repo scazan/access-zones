@@ -148,25 +148,28 @@ describe('Bitfield Validation', () => {
   describe('describeBitField', () => {
     it('should describe valid bitfields correctly', () => {
       expect(describeBitField(0)).toBe('No permissions');
+      expect(describeBitField(PERMISSION_MASKS.ADMIN)).toBe('ADMIN');
       expect(describeBitField(PERMISSION_MASKS.CREATE)).toBe('CREATE');
       expect(describeBitField(PERMISSION_MASKS.READ)).toBe('READ');
       expect(describeBitField(PERMISSION_MASKS.UPDATE)).toBe('UPDATE');
       expect(describeBitField(PERMISSION_MASKS.DELETE)).toBe('DELETE');
-      expect(describeBitField(PERMISSION_MASKS.ADMIN)).toBe('CREATE | READ | UPDATE | DELETE');
+      const allCrud = PERMISSION_MASKS.CREATE | PERMISSION_MASKS.READ |
+                      PERMISSION_MASKS.UPDATE | PERMISSION_MASKS.DELETE;
+      expect(describeBitField(allCrud)).toBe('CREATE | READ | UPDATE | DELETE');
     });
 
     it('should describe combinations correctly', () => {
       const readWrite = PERMISSION_MASKS.READ | PERMISSION_MASKS.UPDATE;
       expect(describeBitField(readWrite)).toBe('READ | UPDATE');
-      
+
       const createRead = PERMISSION_MASKS.CREATE | PERMISSION_MASKS.READ;
       expect(describeBitField(createRead)).toBe('CREATE | READ');
     });
 
     it('should describe future permission bits', () => {
-      expect(describeBitField(16)).toBe('CUSTOM(16)'); // Bit 4
       expect(describeBitField(32)).toBe('CUSTOM(32)'); // Bit 5
-      expect(describeBitField(PERMISSION_MASKS.READ | 16)).toBe('READ | CUSTOM(16)');
+      expect(describeBitField(64)).toBe('CUSTOM(64)'); // Bit 6
+      expect(describeBitField(PERMISSION_MASKS.READ | 32)).toBe('READ | CUSTOM(32)');
     });
 
     it('should handle invalid bitfields', () => {

@@ -8,12 +8,11 @@ A flexible, high-performance role-based access control (RBAC) library with zone-
 
 ## Features
 
+- **Role Aggregation**: Combine multiple roles with OR logic for flexible inheritance
 - **High Performance**: Bitfield operations for O(1) permission checking
 - **Zone-Based**: Organize permissions by functional areas (content, users, admin, etc.)
-- **Role Aggregation**: Combine multiple roles with OR logic for flexible inheritance
 - **Type-Safe**: Full TypeScript support with comprehensive type definitions
 - **Zero Dependencies**: No runtime dependencies
-- **Well Tested**: 100% test coverage
 - **Database-Agnostic**: Works with any database or ORM
 
 ## Installation
@@ -66,11 +65,11 @@ Permissions use bitfield operations for maximum efficiency:
 ```typescript
 import { PERMISSION_MASKS } from 'access-zones';
 
-PERMISSION_MASKS.CREATE  // 0b1000 (8)  - Can create new items
-PERMISSION_MASKS.READ    // 0b0100 (4)  - Can read/view items
-PERMISSION_MASKS.UPDATE  // 0b0010 (2)  - Can modify items
-PERMISSION_MASKS.DELETE  // 0b0001 (1)  - Can delete items
-PERMISSION_MASKS.ADMIN   // 0b1111 (15) - All permissions
+PERMISSION_MASKS.ADMIN   // 0b10000 (16) - Admin permission
+PERMISSION_MASKS.CREATE  // 0b01000 (8)  - Can create new items
+PERMISSION_MASKS.READ    // 0b00100 (4)  - Can read/view items
+PERMISSION_MASKS.UPDATE  // 0b00010 (2)  - Can modify items
+PERMISSION_MASKS.DELETE  // 0b00001 (1)  - Can delete items
 ```
 
 Combine permissions with bitwise OR:
@@ -79,8 +78,12 @@ Combine permissions with bitwise OR:
 // Read + Update permissions
 const editorPermissions = PERMISSION_MASKS.READ | PERMISSION_MASKS.UPDATE; // 6
 
-// Full CRUD permissions
-const adminPermissions = PERMISSION_MASKS.ADMIN; // 15
+// All CRUD permissions
+const allCrud = PERMISSION_MASKS.CREATE | PERMISSION_MASKS.READ |
+                PERMISSION_MASKS.UPDATE | PERMISSION_MASKS.DELETE; // 15
+
+// Full permissions including admin
+const fullPermissions = allCrud | PERMISSION_MASKS.ADMIN; // 31
 ```
 
 ### Access Zones
@@ -299,7 +302,7 @@ The library exports the following TypeScript types:
 ```typescript
 import type {
   // Permission types
-  Permission,              // { create: boolean, read: boolean, update: boolean, delete: boolean }
+  Permission,              // { create, read, update, delete, admin: boolean }
   AccessZonePermission,    // Partial<Record<string, number>>
   ZonePermissions,         // Record<string, Permission>
   ItemAccessSettings,      // Item-level access configuration
@@ -336,6 +339,56 @@ const dbRole = {
 // Normalize for RBAC operations
 const role = normalizeRole(dbRole);
 // { id: 'role-1', name: 'Editor', access: { content: 6 } }
+```
+
+## Security
+
+The library includes multiple layers of security protection:
+
+### Bitfield Validation
+All permission bitfields are validated to prevent:
+- Negative numbers (e.g., `-1` which has all bits set)
+- Values exceeding 32-bit limit
+- Non-integer values (floats, NaN, Infinity)
+- Type coercion attacks (strings, booleans, objects)
+
+### Zone Name Validation
+Zone names are validated to prevent prototype pollution and method override attacks:
+
+```typescript
+// These zone names are REJECTED:
+'__proto__'      // Prototype pollution
+'constructor'    // Constructor override
+'toString'       // Method override
+'_internal'      // Underscore prefix
+'settings_'      // Underscore suffix
+''               // Empty string
+```
+
+### Null-Prototype Objects
+Permission objects use `Object.create(null)` internally to prevent prototype chain attacks.
+
+### Validation Functions
+
+```typescript
+import {
+  isValidZoneName,
+  validateZoneName,
+  isValidBitField,
+  validateBitField,
+  createSafeObject
+} from 'access-zones';
+
+// Check if a zone name is valid
+isValidZoneName('content');     // true
+isValidZoneName('__proto__');   // false
+
+// Validate with exception
+validateZoneName('content');    // OK
+validateZoneName('__proto__');  // throws AccessControlException
+
+// Create safe objects for your own use
+const safeObj = createSafeObject<Record<string, number>>();
 ```
 
 ## Error Handling

@@ -7,7 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security Improvements
+- **Zone name validation** - Zone names are now validated to prevent prototype pollution and method override attacks
+  - Reserved property names (`__proto__`, `constructor`, `toString`, etc.) are rejected
+  - Zone names starting or ending with underscore are rejected
+  - Maximum zone name length enforced (128 characters)
+- **Null-prototype objects** - Permission accumulation now uses `Object.create(null)` to prevent prototype chain attacks
+- **16 new security tests** added for zone name attack prevention
+
 ### Breaking Changes
+- **Zone name restrictions** - Zone names can no longer use reserved JavaScript property names or start/end with underscores
 - **Removed Zod dependency** - Replaced with pure TypeScript types
 - **Zod schemas are no longer exported** - Use the TypeScript types directly:
   - `PermissionSchema` → `Permission`
@@ -32,6 +41,12 @@ type MyPermission = z.infer<typeof PermissionSchema>;
 // After
 import type { Permission } from 'access-zones';
 ```
+
+### Changed
+- `Permission` type now includes `admin: boolean` field
+- `PERMISSION_MASKS.ADMIN` is now a separate bit (16) instead of all permissions combined
+- Removed `PERMISSION_MASKS.ALL` - combine individual masks explicitly instead
+- `UserWithZonePermissions.access` now uses `Permission` type instead of inline definition
 
 ### Removed
 - `zod` dependency

@@ -47,6 +47,7 @@ describe('Integration tests', () => {
       read: true,
       update: true,
       delete: false,
+      admin: false,
     });
 
     // 3. Check specific permissions
@@ -89,6 +90,7 @@ describe('Integration tests', () => {
       read: true,
       update: false,
       delete: false,
+      admin: false,
     };
 
     // Convert to bitfield

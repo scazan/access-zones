@@ -133,13 +133,14 @@ describe('Permission checking', () => {
           },
         },
       };
-      
+
       const result = getUserPermissions(mockUser, item, 'content');
       expect(result).toEqual({
         create: true,
         read: true,
         update: true,
         delete: true,
+        admin: true,
       });
     });
 
@@ -152,25 +153,27 @@ describe('Permission checking', () => {
           },
         },
       };
-      
+
       const result = getUserPermissions(mockUser, item, 'content');
       expect(result).toEqual({
         create: false,
         read: true,
         update: false,
         delete: false,
+        admin: false,
       });
     });
 
     it('should use role permissions when no access settings', () => {
       const item = {};
-      
+
       const result = getUserPermissions(mockUser, item, 'content');
       expect(result).toEqual({
         create: true,
         read: true,
         update: true,
         delete: false,
+        admin: false,
       });
     });
 
@@ -187,13 +190,14 @@ describe('Permission checking', () => {
           },
         },
       };
-      
+
       const result = getUserPermissions(mockUser, item, 'content');
       expect(result).toEqual({
         create: false,
         read: true,
         update: true,
         delete: false,
+        admin: false,
       });
     });
   });

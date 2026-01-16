@@ -115,7 +115,10 @@ export function getUserPermissions(
           : null;
       
       if (itemOwnerId === userId) {
-        return fromBitField(PERMISSION_MASKS.ADMIN);
+        return fromBitField(
+          PERMISSION_MASKS.CREATE | PERMISSION_MASKS.READ |
+          PERMISSION_MASKS.UPDATE | PERMISSION_MASKS.DELETE | PERMISSION_MASKS.ADMIN
+        );
       }
     }
 

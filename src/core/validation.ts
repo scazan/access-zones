@@ -2,6 +2,99 @@ import { PERMISSION_MASKS } from '../constants/masks';
 import { AccessControlException } from '../types/errors';
 
 /**
+ * Reserved property names that cannot be used as zone names
+ * These are JavaScript built-in property names that could cause issues
+ */
+export const RESERVED_ZONE_NAMES = new Set([
+  '__proto__',
+  '__defineGetter__',
+  '__defineSetter__',
+  '__lookupGetter__',
+  '__lookupSetter__',
+  'constructor',
+  'hasOwnProperty',
+  'isPrototypeOf',
+  'propertyIsEnumerable',
+  'toLocaleString',
+  'toString',
+  'valueOf',
+]);
+
+/**
+ * Maximum allowed zone name length
+ */
+export const MAX_ZONE_NAME_LENGTH = 128;
+
+/**
+ * Validates that a zone name is safe and valid
+ * @param zoneName The zone name to validate
+ * @returns True if valid, false otherwise
+ */
+export function isValidZoneName(zoneName: string): boolean {
+  // Must be a non-empty string
+  if (typeof zoneName !== 'string' || zoneName.length === 0) {
+    return false;
+  }
+
+  // Must not exceed maximum length
+  if (zoneName.length > MAX_ZONE_NAME_LENGTH) {
+    return false;
+  }
+
+  // Must not be a reserved property name
+  if (RESERVED_ZONE_NAMES.has(zoneName)) {
+    return false;
+  }
+
+  // Must not start or end with underscore (convention for internal properties)
+  if (zoneName.startsWith('_') || zoneName.endsWith('_')) {
+    return false;
+  }
+
+  return true;
+}
+
+/**
+ * Validates a zone name and throws an exception if invalid
+ * @param zoneName The zone name to validate
+ * @param context Additional context for error messages
+ * @throws {AccessControlException} If the zone name is invalid
+ */
+export function validateZoneName(zoneName: string, context = 'zone name'): void {
+  if (!isValidZoneName(zoneName)) {
+    let reason = '';
+
+    if (typeof zoneName !== 'string') {
+      reason = 'Must be a string.';
+    } else if (zoneName.length === 0) {
+      reason = 'Must not be empty.';
+    } else if (zoneName.length > MAX_ZONE_NAME_LENGTH) {
+      reason = `Must not exceed ${MAX_ZONE_NAME_LENGTH} characters.`;
+    } else if (RESERVED_ZONE_NAMES.has(zoneName)) {
+      reason = `'${zoneName}' is a reserved property name and cannot be used as a zone name.`;
+    } else if (zoneName.startsWith('_') || zoneName.endsWith('_')) {
+      reason = 'Must not start or end with underscore.';
+    } else {
+      reason = 'Invalid zone name.';
+    }
+
+    throw new AccessControlException({
+      message: `Invalid ${context}: '${zoneName}'. ${reason}`,
+      status: 'invalid_permission',
+    });
+  }
+}
+
+/**
+ * Creates a null-prototype object safe from prototype pollution
+ * Use this instead of {} for permission accumulation
+ * @returns A new object with null prototype
+ */
+export function createSafeObject<T extends Record<string, unknown>>(): T {
+  return Object.create(null) as T;
+}
+
+/**
  * Maximum valid permission bitfield value
  * Using 32 bits to allow for future expansion while maintaining security
  * This supports up to 32 different permission types
@@ -28,6 +121,7 @@ export const CURRENT_PERMISSION_MASKS = [
   PERMISSION_MASKS.READ,
   PERMISSION_MASKS.UPDATE,
   PERMISSION_MASKS.DELETE,
+  PERMISSION_MASKS.ADMIN,
 ] as const;
 
 /**
@@ -143,15 +237,16 @@ export function describeBitField(bitField: number): string {
   }
 
   const permissions: string[] = [];
-  
+
   // Check known permission bits
+  if (bitField & PERMISSION_MASKS.ADMIN) permissions.push('ADMIN');
   if (bitField & PERMISSION_MASKS.CREATE) permissions.push('CREATE');
   if (bitField & PERMISSION_MASKS.READ) permissions.push('READ');
   if (bitField & PERMISSION_MASKS.UPDATE) permissions.push('UPDATE');
   if (bitField & PERMISSION_MASKS.DELETE) permissions.push('DELETE');
-  
+
   // Check for unknown/future permission bits
-  const knownBits = PERMISSION_MASKS.CREATE | PERMISSION_MASKS.READ | 
+  const knownBits = PERMISSION_MASKS.ADMIN | PERMISSION_MASKS.CREATE | PERMISSION_MASKS.READ |
                    PERMISSION_MASKS.UPDATE | PERMISSION_MASKS.DELETE;
   const unknownBits = bitField & ~knownBits;
   

@@ -8,6 +8,7 @@ export interface Permission {
   read: boolean;
   update: boolean;
   delete: boolean;
+  admin: boolean;
 }
 
 /**
