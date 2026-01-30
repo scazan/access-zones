@@ -28,7 +28,7 @@ npm run build
 ## Development Workflow
 
 1. **Fork** the repository
-2. **Create** a feature branch from `main`
+2. **Create** a feature branch from `dev`
 3. **Make** your changes
 4. **Add** tests for new functionality
 5. **Ensure** all tests pass
@@ -68,6 +68,7 @@ When reporting issues, please include:
 - Expected vs actual behavior
 - Environment details (Node.js version, etc.)
 - Minimal code example if applicable
+- If you have a test that reproduces it you can submit it as a PR
 
 ## Feature Requests
 
