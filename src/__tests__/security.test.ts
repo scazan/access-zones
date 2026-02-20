@@ -1,5 +1,5 @@
 import { hasPermission, fromBitField, combinePermissions, roleToBitField } from '../core/bitfield';
-import { collapseRoles, normalizeRole, getGlobalPermissions } from '../core/roles';
+import { collapseRoles, normalizeRole } from '../core/roles';
 import { PERMISSION_MASKS } from '../constants/masks';
 import { AccessControlException } from '../types/errors';
 import {
