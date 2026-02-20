@@ -1,4 +1,4 @@
-import { toBitField, fromBitField, roleToBitField, hasPermission, combinePermissions, normalizePermissionToBitField } from '../core/bitfield';
+import { toBitField, fromBitField, roleToBitField, hasPermission, combinePermissions, normalizePermissionToBitField, normalizePermission } from '../core/bitfield';
 import { PERMISSION_MASKS } from '../constants/masks';
 
 describe('Bitfield utilities', () => {
@@ -131,16 +131,38 @@ describe('Bitfield utilities', () => {
         admin: PERMISSION_MASKS.READ | PERMISSION_MASKS.UPDATE,
       });
     });
+
+    it('should return empty object for empty input', () => {
+      const result = roleToBitField({});
+      expect(result).toEqual({});
+    });
+
+    it('should return null-prototype object', () => {
+      const result = roleToBitField({});
+      expect(Object.getPrototypeOf(result)).toBe(null);
+    });
   });
 
   describe('hasPermission', () => {
     it('should check if bitfield has specific permission', () => {
       const bitField = PERMISSION_MASKS.CREATE | PERMISSION_MASKS.READ;
-      
+
       expect(hasPermission(bitField, PERMISSION_MASKS.CREATE)).toBe(true);
       expect(hasPermission(bitField, PERMISSION_MASKS.READ)).toBe(true);
       expect(hasPermission(bitField, PERMISSION_MASKS.UPDATE)).toBe(false);
       expect(hasPermission(bitField, PERMISSION_MASKS.DELETE)).toBe(false);
+    });
+
+    it('should require all bits when checking a combined mask', () => {
+      const bitField = PERMISSION_MASKS.READ; // only READ
+      const combinedMask = PERMISSION_MASKS.READ | PERMISSION_MASKS.CREATE;
+
+      // User has READ but not CREATE, so combined check should fail
+      expect(hasPermission(bitField, combinedMask)).toBe(false);
+
+      // User with both should pass
+      const fullBitField = PERMISSION_MASKS.READ | PERMISSION_MASKS.CREATE;
+      expect(hasPermission(fullBitField, combinedMask)).toBe(true);
     });
   });
 
@@ -164,6 +186,37 @@ describe('Bitfield utilities', () => {
       expect(() => combinePermissions(-1)).toThrow();
       expect(() => combinePermissions(0x100000000)).toThrow(); // 2^32
       expect(() => combinePermissions(PERMISSION_MASKS.CREATE, Number.MAX_SAFE_INTEGER)).toThrow();
+    });
+  });
+
+  describe('normalizePermission', () => {
+    it('should convert number input to Permission object', () => {
+      const result = normalizePermission(PERMISSION_MASKS.CREATE | PERMISSION_MASKS.READ);
+      expect(result).toEqual({
+        create: true,
+        read: true,
+        update: false,
+        delete: false,
+        admin: false,
+      });
+    });
+
+    it('should pass through Permission object unchanged', () => {
+      const input = { create: true, read: false, update: false, delete: false, admin: false };
+      const result = normalizePermission(input);
+      expect(result).toBe(input); // same reference
+    });
+  });
+
+  describe('normalizePermissionToBitField', () => {
+    it('should pass through valid number input', () => {
+      const input = PERMISSION_MASKS.CREATE | PERMISSION_MASKS.READ;
+      expect(normalizePermissionToBitField(input)).toBe(input);
+    });
+
+    it('should convert Permission object to bitfield', () => {
+      const input = { create: true, read: true, update: false, delete: false, admin: false };
+      expect(normalizePermissionToBitField(input)).toBe(PERMISSION_MASKS.CREATE | PERMISSION_MASKS.READ);
     });
   });
 

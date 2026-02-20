@@ -1,8 +1,9 @@
-import { 
-  normalizeRole, 
-  normalizeRoles, 
-  collapseRoles, 
+import {
+  normalizeRole,
+  normalizeRoles,
+  collapseRoles,
   getGlobalPermissions,
+  addZonePermissionsToUser,
   userHasRole,
   userHasAnyRole,
   userHasAllRoles,
@@ -72,7 +73,7 @@ describe('Role management', () => {
     it('should convert multiple roles to normalized format', () => {
       const roles = [mockRoleWithAccess];
       const result = normalizeRoles(roles);
-      
+
       expect(result).toHaveLength(1);
       expect(result[0]).toEqual({
         id: 'role1',
@@ -82,6 +83,10 @@ describe('Role management', () => {
           admin: PERMISSION_MASKS.READ,
         },
       });
+    });
+
+    it('should return empty array for empty input', () => {
+      expect(normalizeRoles([])).toEqual([]);
     });
   });
 
@@ -130,6 +135,37 @@ describe('Role management', () => {
         },
       });
     });
+
+    it('should return empty object for user with no roles', () => {
+      const emptyUser: UserWithRoles = { id: 'user2', roles: [] };
+      expect(getGlobalPermissions(emptyUser)).toEqual({});
+    });
+  });
+
+  describe('addZonePermissionsToUser', () => {
+    it('should add computed access field to user', () => {
+      const result = addZonePermissionsToUser(mockUser);
+
+      expect(result.id).toBe('user1');
+      expect(result.roles).toBe(mockUser.roles);
+      expect(result.access).toEqual(getGlobalPermissions(mockUser));
+    });
+
+    it('should preserve extra user properties', () => {
+      const userWithEmail: UserWithRoles = { ...mockUser, email: 'test@example.com' };
+      const result = addZonePermissionsToUser(userWithEmail);
+
+      expect(result.email).toBe('test@example.com');
+      expect(result.access).toBeDefined();
+    });
+
+    it('should return empty access for user with no roles', () => {
+      const emptyUser: UserWithRoles = { id: 'user2', roles: [] };
+      const result = addZonePermissionsToUser(emptyUser);
+
+      expect(result.id).toBe('user2');
+      expect(result.access).toEqual({});
+    });
   });
 
   describe('userHasRole', () => {
@@ -154,6 +190,10 @@ describe('Role management', () => {
       const result = userHasAnyRole(mockUser, ['Admin', 'SuperUser']);
       expect(result).toBe(false);
     });
+
+    it('should return false for empty roleNames array', () => {
+      expect(userHasAnyRole(mockUser, [])).toBe(false);
+    });
   });
 
   describe('userHasAllRoles', () => {
@@ -165,6 +205,10 @@ describe('Role management', () => {
     it('should return false when user is missing some roles', () => {
       const result = userHasAllRoles(mockUser, ['Editor', 'Admin']);
       expect(result).toBe(false);
+    });
+
+    it('should return true for empty roleNames array', () => {
+      expect(userHasAllRoles(mockUser, [])).toBe(true);
     });
   });
 
