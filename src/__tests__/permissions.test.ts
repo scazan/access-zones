@@ -1,4 +1,4 @@
-import { checkPermission, assertAccess, assertDataAccess, getUserPermissions } from '../core/permissions';
+import { checkPermission, assertAccess, assertDataAccess, getUserPermissions, transformItemAccessSchema, hasPermissions, userHasZonePermission, getUserZonePermissions } from '../core/permissions';
 import { AccessControlException } from '../types/errors';
 import { PERMISSION_MASKS } from '../constants/masks';
 import { NormalizedRole, UserWithZonePermissions } from '../types/roles';
@@ -207,6 +207,21 @@ describe('Permission checking', () => {
       expect(() => assertDataAccess(data, needed, mockUser)).toThrow('Unauthorized');
     });
 
+    it('should check permissions when data is undefined', () => {
+      const needed = { content: PERMISSION_MASKS.READ };
+      expect(assertDataAccess(undefined, needed, mockUser)).toBe(true);
+    });
+
+    it('should throw when data is undefined and permissions insufficient', () => {
+      const needed = { content: PERMISSION_MASKS.DELETE };
+      expect(() => assertDataAccess(undefined, needed, mockUser)).toThrow('Unauthorized');
+    });
+
+    it('should check permissions when data has no userId', () => {
+      const needed = { content: PERMISSION_MASKS.READ };
+      expect(assertDataAccess({}, needed, mockUser)).toBe(true);
+    });
+
     it('should check array permissions for non-owned data (OR logic)', () => {
       const data = { userId: 'other-user' };
       const needed = [
@@ -316,6 +331,224 @@ describe('Permission checking', () => {
         create: false,
         read: true,
         update: true,
+        delete: false,
+        admin: false,
+      });
+    });
+
+    it('should return admin permissions for object-style uid owner', () => {
+      const item = {
+        uid: { id: 'user1', email: 'test@example.com' },
+        settings: {
+          access: {
+            global: PERMISSION_MASKS.READ,
+          },
+        },
+      };
+
+      const result = getUserPermissions(mockUser, item, 'content');
+      expect(result).toEqual({
+        create: true,
+        read: true,
+        update: true,
+        delete: true,
+        admin: true,
+      });
+    });
+
+    it('should handle user-specific permissions as Permission object', () => {
+      const item = {
+        settings: {
+          access: {
+            users: [
+              {
+                uid: 'user1',
+                access: { create: false, read: true, update: true, delete: false, admin: false },
+              },
+            ],
+          },
+        },
+      };
+
+      const result = getUserPermissions(mockUser, item, 'content');
+      expect(result).toEqual({
+        create: false,
+        read: true,
+        update: true,
+        delete: false,
+        admin: false,
+      });
+    });
+
+    it('should return all-false for nonexistent zone', () => {
+      const item = {};
+      const result = getUserPermissions(mockUser, item, 'nonexistent');
+      expect(result).toEqual({
+        create: false,
+        read: false,
+        update: false,
+        delete: false,
+        admin: false,
+      });
+    });
+
+    it('should use role permissions when access settings exist but have no global or users', () => {
+      const item = {
+        uid: 'other-user',
+        settings: {
+          access: {},
+        },
+      };
+
+      const result = getUserPermissions(mockUser, item, 'content');
+      expect(result).toEqual({
+        create: true,
+        read: true,
+        update: true,
+        delete: false,
+        admin: false,
+      });
+    });
+  });
+
+  describe('transformItemAccessSchema', () => {
+    it('should transform global bitfield to Permission object', () => {
+      const result = transformItemAccessSchema({
+        global: PERMISSION_MASKS.READ | PERMISSION_MASKS.UPDATE,
+      });
+
+      expect(result.global).toEqual({
+        create: false,
+        read: true,
+        update: true,
+        delete: false,
+        admin: false,
+      });
+    });
+
+    it('should transform user-level bitfields to Permission objects', () => {
+      const result = transformItemAccessSchema({
+        users: [
+          { uid: 'user1', access: PERMISSION_MASKS.CREATE | PERMISSION_MASKS.READ },
+        ],
+      });
+
+      expect(result.users).toEqual([
+        {
+          uid: 'user1',
+          access: {
+            create: true,
+            read: true,
+            update: false,
+            delete: false,
+            admin: false,
+          },
+        },
+      ]);
+    });
+
+    it('should transform both global and users', () => {
+      const result = transformItemAccessSchema({
+        global: PERMISSION_MASKS.READ,
+        users: [
+          { uid: 'user1', access: PERMISSION_MASKS.CREATE },
+        ],
+      });
+
+      expect(result.global).toEqual({
+        create: false,
+        read: true,
+        update: false,
+        delete: false,
+        admin: false,
+      });
+      expect(result.users![0].access).toEqual({
+        create: true,
+        read: false,
+        update: false,
+        delete: false,
+        admin: false,
+      });
+    });
+
+    it('should handle empty users array', () => {
+      const result = transformItemAccessSchema({ users: [] });
+      expect(result.users).toEqual([]);
+    });
+
+    it('should handle input with no global or users', () => {
+      const result = transformItemAccessSchema({});
+      expect(result.global).toBeUndefined();
+      expect(result.users).toBeUndefined();
+    });
+  });
+
+  describe('hasPermissions', () => {
+    it('should return true when global read permission is set', () => {
+      const item = {
+        settings: {
+          access: {
+            global: PERMISSION_MASKS.READ,
+          },
+        },
+      };
+
+      expect(hasPermissions({ roles: mockRoles }, item)).toBe(true);
+    });
+
+    it('should return true for legacy permissions === 0 (full access)', () => {
+      const item = { settings: { permissions: 0 } };
+      expect(hasPermissions({ roles: mockRoles }, item)).toBe(true);
+    });
+
+    it('should return true for legacy permissions === 1 with read-only', () => {
+      const item = { settings: { permissions: 1 } };
+      expect(hasPermissions({ roles: mockRoles }, item, false)).toBe(true);
+    });
+
+    it('should return false for legacy permissions === 1 with write', () => {
+      const item = { settings: { permissions: 1 } };
+      expect(hasPermissions({ roles: mockRoles }, item, true)).toBe(false);
+    });
+
+    it('should return false when no global or legacy permissions exist', () => {
+      const item = {};
+      expect(hasPermissions({ roles: mockRoles }, item)).toBe(false);
+    });
+  });
+
+  describe('userHasZonePermission', () => {
+    it('should return true when user has the permission in zone', () => {
+      expect(userHasZonePermission({ roles: mockRoles }, 'content', PERMISSION_MASKS.READ)).toBe(true);
+    });
+
+    it('should return false when user lacks the permission in zone', () => {
+      expect(userHasZonePermission({ roles: mockRoles }, 'content', PERMISSION_MASKS.DELETE)).toBe(false);
+    });
+
+    it('should return false for nonexistent zone', () => {
+      expect(userHasZonePermission({ roles: mockRoles }, 'nonexistent', PERMISSION_MASKS.READ)).toBe(false);
+    });
+  });
+
+  describe('getUserZonePermissions', () => {
+    it('should return permissions for an existing zone', () => {
+      const result = getUserZonePermissions({ roles: mockRoles }, 'content');
+      expect(result).toEqual({
+        create: true,
+        read: true,
+        update: true,
+        delete: false,
+        admin: false,
+      });
+    });
+
+    it('should return all-false for nonexistent zone', () => {
+      const result = getUserZonePermissions({ roles: mockRoles }, 'nonexistent');
+      expect(result).toEqual({
+        create: false,
+        read: false,
+        update: false,
         delete: false,
         admin: false,
       });
