@@ -67,6 +67,78 @@ describe('Permission checking', () => {
       const result = checkPermission({}, mockRoles);
       expect(result).toBe(true);
     });
+
+    it('should return true for array when any item passes (OR logic)', () => {
+      const needed = [
+        { content: PERMISSION_MASKS.DELETE }, // fails
+        { content: PERMISSION_MASKS.READ },   // passes
+      ];
+
+      expect(checkPermission(needed, mockRoles)).toBe(true);
+    });
+
+    it('should return false for array when all items fail', () => {
+      const needed = [
+        { content: PERMISSION_MASKS.DELETE },
+        { admin: PERMISSION_MASKS.UPDATE },
+      ];
+
+      expect(checkPermission(needed, mockRoles)).toBe(false);
+    });
+
+    it('should handle array with single passing item same as non-array', () => {
+      expect(checkPermission({ content: PERMISSION_MASKS.READ }, mockRoles)).toBe(true);
+      expect(checkPermission([{ content: PERMISSION_MASKS.READ }], mockRoles)).toBe(true);
+    });
+
+    it('should handle array with single failing item same as non-array', () => {
+      expect(checkPermission({ content: PERMISSION_MASKS.DELETE }, mockRoles)).toBe(false);
+      expect(checkPermission([{ content: PERMISSION_MASKS.DELETE }], mockRoles)).toBe(false);
+    });
+
+    it('should return true for empty array (no permissions needed)', () => {
+      expect(checkPermission([], mockRoles)).toBe(true);
+    });
+
+    it('should require all zones within a single array item (AND within OR)', () => {
+      const needed = [
+        // content:DELETE AND admin:UPDATE — both fail
+        { content: PERMISSION_MASKS.DELETE, admin: PERMISSION_MASKS.UPDATE },
+        // content:READ AND users:READ — both pass (from different roles)
+        { content: PERMISSION_MASKS.READ, users: PERMISSION_MASKS.READ },
+      ];
+
+      expect(checkPermission(needed, mockRoles)).toBe(true);
+    });
+
+    it('should fail when no array item has all its zones satisfied', () => {
+      const needed = [
+        // content:CREATE passes but admin:UPDATE fails
+        { content: PERMISSION_MASKS.CREATE, admin: PERMISSION_MASKS.UPDATE },
+        // users:UPDATE passes but content:DELETE fails
+        { users: PERMISSION_MASKS.UPDATE, content: PERMISSION_MASKS.DELETE },
+      ];
+
+      expect(checkPermission(needed, mockRoles)).toBe(false);
+    });
+
+    it('should pass when array contains an empty object item', () => {
+      const needed = [
+        { content: PERMISSION_MASKS.DELETE }, // fails
+        {},                                    // no permissions needed -> passes
+      ];
+
+      expect(checkPermission(needed, mockRoles)).toBe(true);
+    });
+
+    it('should pass when array item has only zero permissions', () => {
+      const needed = [
+        { content: PERMISSION_MASKS.DELETE }, // fails
+        { content: 0 },                       // zero stripped -> {} -> passes
+      ];
+
+      expect(checkPermission(needed, mockRoles)).toBe(true);
+    });
   });
 
   describe('assertAccess', () => {
@@ -82,7 +154,25 @@ describe('Permission checking', () => {
       const needed = {
         content: PERMISSION_MASKS.DELETE,
       };
-      
+
+      expect(() => assertAccess(needed, mockRoles)).toThrow(AccessControlException);
+    });
+
+    it('should not throw for array when any item passes', () => {
+      const needed = [
+        { content: PERMISSION_MASKS.DELETE },
+        { content: PERMISSION_MASKS.READ },
+      ];
+
+      expect(() => assertAccess(needed, mockRoles)).not.toThrow();
+    });
+
+    it('should throw for array when all items fail', () => {
+      const needed = [
+        { content: PERMISSION_MASKS.DELETE },
+        { admin: PERMISSION_MASKS.UPDATE },
+      ];
+
       expect(() => assertAccess(needed, mockRoles)).toThrow(AccessControlException);
     });
   });
@@ -113,8 +203,38 @@ describe('Permission checking', () => {
     it('should throw for insufficient permissions on non-owned data', () => {
       const data = { userId: 'other-user' };
       const needed = { content: PERMISSION_MASKS.DELETE };
-      
+
       expect(() => assertDataAccess(data, needed, mockUser)).toThrow('Unauthorized');
+    });
+
+    it('should check array permissions for non-owned data (OR logic)', () => {
+      const data = { userId: 'other-user' };
+      const needed = [
+        { content: PERMISSION_MASKS.DELETE },
+        { content: PERMISSION_MASKS.READ },
+      ];
+
+      expect(assertDataAccess(data, needed, mockUser)).toBe(true);
+    });
+
+    it('should throw for non-owned data when all array items fail', () => {
+      const data = { userId: 'other-user' };
+      const needed = [
+        { content: PERMISSION_MASKS.DELETE },
+        { admin: PERMISSION_MASKS.UPDATE },
+      ];
+
+      expect(() => assertDataAccess(data, needed, mockUser)).toThrow('Unauthorized');
+    });
+
+    it('should bypass array permission checks for owned data', () => {
+      const data = { userId: 'user1' };
+      const needed = [
+        { content: PERMISSION_MASKS.DELETE },
+        { admin: PERMISSION_MASKS.DELETE },
+      ];
+
+      expect(assertDataAccess(data, needed, mockUser)).toBe(true);
     });
   });
 

@@ -17,6 +17,11 @@ export interface Permission {
 export type AccessZonePermission = Partial<Record<AccessZone, number>>;
 
 /**
+ * Accepts a single permission or an array (OR logic: any must pass)
+ */
+export type AccessZonePermissionInput = AccessZonePermission | AccessZonePermission[];
+
+/**
  * Zone-based permissions mapping zones to permission objects
  */
 export type ZonePermissions = Record<string, Permission>;

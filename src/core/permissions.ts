@@ -1,4 +1,4 @@
-import { AccessZonePermission, AccessControlledItem, ItemAccessSettings } from '../types/permissions';
+import { AccessZonePermission, AccessZonePermissionInput, AccessControlledItem, ItemAccessSettings } from '../types/permissions';
 import { NormalizedRole, UserWithZonePermissions } from '../types/roles';
 import { AccessControlException } from '../types/errors';
 import { PERMISSION_MASKS } from '../constants/masks';
@@ -6,18 +6,15 @@ import { collapseRoles } from './roles';
 import { fromBitField, normalizePermissionToBitField, hasPermission } from './bitfield';
 
 /**
- * Check if user has the required permissions across specified zones
- * @param needed Required permissions by zone
- * @param currentRoles User's current roles
- * @returns True if user has all required permissions
+ * Check a single permission object against the user's roles
  */
-export function checkPermission(
+function checkSinglePermission(
   needed: AccessZonePermission,
   currentRoles: Array<NormalizedRole>,
 ): boolean {
   // Create a copy to avoid mutating the original
   const neededCopy = { ...needed };
-  
+
   // Remove zero permission situations so they don't count toward total
   Object.entries(neededCopy).forEach(([zoneName, permission]) => {
     if (permission === 0) {
@@ -45,13 +42,33 @@ export function checkPermission(
 }
 
 /**
+ * Check if user has the required permissions across specified zones.
+ * Accepts a single permission object or an array (OR logic: passes if any item matches).
+ * @param needed Required permissions by zone (or array for OR logic)
+ * @param currentRoles User's current roles
+ * @returns True if user has all required permissions
+ */
+export function checkPermission(
+  needed: AccessZonePermissionInput,
+  currentRoles: Array<NormalizedRole>,
+): boolean {
+  if (Array.isArray(needed)) {
+    if (needed.length === 0) {
+      return true;
+    }
+    return needed.some((item) => checkSinglePermission(item, currentRoles));
+  }
+  return checkSinglePermission(needed, currentRoles);
+}
+
+/**
  * Assert that user has required permissions, throw error if not
  * @param needed Required permissions by zone
  * @param currentRoles User's current roles
  * @throws AccessControlException if permissions are insufficient
  */
 export function assertAccess(
-  needed: AccessZonePermission,
+  needed: AccessZonePermissionInput,
   currentRoles: Array<NormalizedRole>,
 ): void {
   if (!checkPermission(needed, currentRoles)) {
@@ -72,7 +89,7 @@ export function assertAccess(
  */
 export function assertDataAccess(
   data: Partial<{ userId: string }> | undefined,
-  accessNeeded: AccessZonePermission,
+  accessNeeded: AccessZonePermissionInput,
   user: UserWithZonePermissions,
 ): boolean {
   // Allow access if user owns the data
