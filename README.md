@@ -124,20 +124,33 @@ const combined = collapseRoles(roles);
 
 #### `checkPermission(needed, roles)`
 
-Check if roles satisfy the required permissions.
+Check if roles satisfy the required permissions. The `needed` parameter accepts a single permission object or an array of permission objects. When an array is passed, access is granted if **any** item in the array passes (OR logic).
 
 ```typescript
 import { checkPermission, PERMISSION_MASKS } from 'access-zones';
 
 const roles = [{ id: '1', name: 'Editor', access: { content: 6 } }];
 
+// Single permission object
 checkPermission({ content: PERMISSION_MASKS.READ }, roles);   // true
 checkPermission({ content: PERMISSION_MASKS.DELETE }, roles); // false
+
+// Array of permissions (OR logic) — passes if ANY item matches
+checkPermission([
+  { content: PERMISSION_MASKS.DELETE },  // fails
+  { content: PERMISSION_MASKS.READ },    // passes
+], roles); // true
+
+// Each array item still requires ALL its zones to pass (AND within OR)
+checkPermission([
+  { content: PERMISSION_MASKS.READ, admin: PERMISSION_MASKS.ADMIN }, // fails — user lacks admin:ADMIN
+  { content: PERMISSION_MASKS.READ },                                // passes
+], roles); // true
 ```
 
 #### `assertAccess(needed, roles)`
 
-Assert permissions, throwing `AccessControlException` if insufficient.
+Assert permissions, throwing `AccessControlException` if insufficient. Also accepts an array of permissions with OR logic.
 
 ```typescript
 import { assertAccess, PERMISSION_MASKS } from 'access-zones';
@@ -147,11 +160,17 @@ try {
 } catch (error) {
   // AccessControlException: Not authenticated
 }
+
+// With array — does not throw if any item passes
+assertAccess([
+  { content: PERMISSION_MASKS.DELETE },
+  { content: PERMISSION_MASKS.READ },
+], roles); // OK — second item passes
 ```
 
 #### `assertDataAccess(data, needed, user)`
 
-Check access to a specific data item, considering ownership.
+Check access to a specific data item, considering ownership. Also accepts an array of permissions with OR logic.
 
 ```typescript
 import { assertDataAccess, PERMISSION_MASKS } from 'access-zones';
@@ -303,7 +322,8 @@ The library exports the following TypeScript types:
 import type {
   // Permission types
   Permission,              // { create, read, update, delete, admin: boolean }
-  AccessZonePermission,    // Partial<Record<string, number>>
+  AccessZonePermission,         // Partial<Record<string, number>>
+  AccessZonePermissionInput,    // AccessZonePermission | AccessZonePermission[]
   ZonePermissions,         // Record<string, Permission>
   ItemAccessSettings,      // Item-level access configuration
   AccessControlledItem,    // Item with access settings
