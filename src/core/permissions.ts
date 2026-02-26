@@ -73,7 +73,7 @@ export function assertAccess(
 ): void {
   if (!checkPermission(needed, currentRoles)) {
     throw new AccessControlException({
-      message: "Not authenticated",
+      message: "Not authorized",
       status: "unauthorized",
     });
   }
